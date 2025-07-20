@@ -1,11 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/user');
+const User = require('../models/User');
 const router = express.Router();
 
 /**
- * @route   POST /api/auth/register
+ * @route   POST /api/auth/register.
  * @desc    Register a new user
  * @access  Public
  */
