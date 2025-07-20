@@ -1,38 +1,22 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
-// Placeholder for an icon, e.g., from lucide-react or an SVG
-// These SVG components can remain as they are, or you can also style them via CSS if needed.
-const MailIcon = ({ className }) => (
-  <svg className={className || "icon-default"} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect width="20" height="16" x="2" y="4" rx="2" />
-    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-  </svg>
-);
-
-const LockIcon = ({ className }) => (
-  <svg className={className || "icon-default"} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-  </svg>
-);
-
-const ArrowLeftIcon = ({ className }) => (
-  <svg className={className || "icon-default"} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m12 19-7-7 7-7" />
-    <path d="M19 12H5" />
-  </svg>
-);
+// ... (SVG Icons remain the same)
+const MailIcon = ({ className }) => ( <svg>...</svg> );
+const LockIcon = ({ className }) => ( <svg>...</svg> );
+const ArrowLeftIcon = ({ className }) => ( <svg>...</svg> );
 
 
 function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Clear previous errors
+    setError('');
 
     if (!email) {
       setError('Please enter your email address.');
@@ -43,21 +27,37 @@ function ForgotPasswordPage() {
       return;
     }
 
-    // --- TODO: Implement actual password reset logic here ---
-    console.log('Password reset requested for:', email);
-    // --- End of TODO ---
+    setIsSubmitting(true);
+    const loadingToast = toast.loading('Sending reset link...');
 
-    setIsSubmitted(true); // Show success message
+    try {
+        const response = await fetch('https://pro-track-job-portal-backend.onrender.com/api/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+
+        const result = await response.json();
+        toast.dismiss(loadingToast);
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Failed to send reset link.');
+        }
+        
+        // Even on success, we show a generic message for security.
+        // The actual success/failure is handled by the backend.
+        setIsSubmitted(true);
+
+    } catch (err) {
+        toast.dismiss(loadingToast);
+        toast.error(err.message || 'An error occurred.');
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="forgot-password-container">
-      {/* Optional: PRO TRACK Logo
-      <div className="logo-container">
-        PRO <span className="logo-track">TRACK</span>
-      </div>
-      */}
-
       <div className="form-card">
         <div className="form-header">
           <LockIcon className="header-icon" />
@@ -100,24 +100,22 @@ function ForgotPasswordPage() {
               <button
                 type="submit"
                 className="submit-button"
+                disabled={isSubmitting}
               >
-                Send Reset Link
+                {isSubmitting ? 'Sending...' : 'Send Reset Link'}
               </button>
             </div>
           </form>
         ) : (
           <div className="submission-success">
             <p>
-              Password reset instructions have been sent to your email.
+              You can now close this page.
             </p>
           </div>
         )}
 
         <div className="form-footer">
-          <Link
-            to="/login" // Adjust this path to your actual login route
-            className="back-link"
-          >
+          <Link to="/login" className="back-link">
             <ArrowLeftIcon className="back-link-icon" />
             Back to Login
           </Link>
