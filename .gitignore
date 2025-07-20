@@ -1,0 +1,39 @@
+# Environment Variables
+# CRITICAL: Contains secrets like database passwords. NEVER commit this file.
+backend/.env
+*.local
+
+# Dependency Directories
+# Installed via 'npm install' and should not be in version control.
+backend/node_modules/
+job-portal/node_modules/
+
+# Build & Cache Directories
+# Generated automatically by the frontend build process and dev server.
+job-portal/dist/
+job-portal/dist-ssr/
+job-portal/.vite/
+
+# Log files
+# Generated during runtime and not needed in the repository.
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor-specific files
+# User-specific settings for code editors like VSCode, WebStorm, etc.
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Operating System generated files
+.DS_Store
+Thumbs.db
