@@ -6,7 +6,7 @@ import { Toaster } from 'react-hot-toast'; // Toaster ko import karein
 // ... (baaki saare component imports waise hi rahenge)
 import LandingPage from './Pages/LandingPage';
 import AuthModule from './Pages/Login-Register';
-import ForgotPasswordPage from './components/ForgotPassword.jsx';
+import ForgotPasswordPage from './Components/ForgotPassword.jsx';
 import AdminDashboard from './Pages/AdminPages/AdminDashboard';
 import UserManagementPage from './Pages/AdminPages/AdminUserManagement';
 import RecruiterApprovalsPage from './Pages/AdminPages/AdminRecruiterApproval';
