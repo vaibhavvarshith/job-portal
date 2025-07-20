@@ -17,7 +17,10 @@ const PORT = process.env.PORT || 5000;
 
 // --- FIX FOR DEPLOYMENT: CORS Configuration ---
 // Define the allowed origins (your Vercel frontend URL)
-const allowedOrigins = ['https://your-vercel-frontend-url.vercel.app', 'http://localhost:5173'];
+const allowedOrigins = [
+    'https://pro-track-job-portal.vercel.app', // Aapka Vercel URL
+    'http://localhost:5173' // Local development ke liye
+];
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -50,7 +53,6 @@ mongoose.connect(process.env.MONGO_URI, {
 });
 
 // --- Mongoose Schemas and Models ---
-// ... (Your schemas remain the same)
 const User = require('./models/User');
 const Job = require('./models/Job');
 const Internship = require('./models/Internship');
@@ -59,7 +61,6 @@ const CompanyProfile = require('./models/CompanyProfile');
 
 
 // --- API Routes ---
-// ... (Your routes remain the same)
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/internships', require('./routes/internships'));

@@ -61,9 +61,9 @@ function RecruiterDashboardStandalonePage() {
             try {
                 // Fetch all data in parallel
                 const [statsRes, appsRes, profileRes] = await Promise.all([
-                    fetch('http://https://pro-track-job-portal-backend.onrender.com/api/recruiter/dashboard-stats', { headers: { 'Authorization': `Bearer ${token}` } }),
-                    fetch('http://https://pro-track-job-portal-backend.onrender.com/api/recruiter/recent-applications', { headers: { 'Authorization': `Bearer ${token}` } }),
-                    fetch('http://https://pro-track-job-portal-backend.onrender.com/api/profile/recruiter', { headers: { 'Authorization': `Bearer ${token}` } })
+                    fetch('https://pro-track-job-portal-backend.onrender.com/api/recruiter/dashboard-stats', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('https://pro-track-job-portal-backend.onrender.com/api/recruiter/recent-applications', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('https://pro-track-job-portal-backend.onrender.com/api/profile/recruiter', { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
 
                 if (!statsRes.ok || !appsRes.ok) {
