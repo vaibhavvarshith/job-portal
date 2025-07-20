@@ -41,7 +41,7 @@ The application is divided into three distinct roles, each with its own dedicate
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/skr090850/Pro-Track-Job-Portal-.git
     ```
 
 2.  **Setup Backend:**
