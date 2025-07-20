@@ -1,11 +1,12 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const crypto = require('crypto'); // Node.js module to generate random tokens
+const User = require('../models/User'); // Ensure this path is correct and casing matches the filename
 const router = express.Router();
 
 /**
- * @route   POST /api/auth/register.
+ * @route   POST /api/auth/register
  * @desc    Register a new user
  * @access  Public
  */
@@ -59,6 +60,44 @@ router.post('/login', async (req, res) => {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error during login.' });
   }
+});
+
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Generate a password reset token
+ * @access  Public
+ */
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            // For security, we don't reveal if the user was found or not.
+            return res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+        }
+
+        // 1. Generate a random token
+        const resetToken = crypto.randomBytes(20).toString('hex');
+
+        // 2. Hash the token and save it to the database with an expiry time (e.g., 10 minutes)
+        user.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+        
+        await user.save();
+
+        // 3. Create the reset URL
+        // NOTE: In a real app, you would use an email service (like Nodemailer) to send this URL to the user.
+        // For now, we will just log it to the console for testing.
+        const resetUrl = `https://pro-track-job-portal.vercel.app/reset-password/${resetToken}`;
+        console.log('Password Reset Link (for testing):', resetUrl);
+
+        res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+
+    } catch (error) {
+        console.error('Forgot Password error:', error);
+        res.status(500).json({ message: 'Server error.' });
+    }
 });
 
 module.exports = router;

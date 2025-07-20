@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, required: true, enum: ['student', 'recruiter', 'admin'] },
   name: { type: String },
   
-  // --- NEW FIELDS FOR PASSWORD RESET ---
+  // --- Fields for Password Reset ---
   passwordResetToken: { type: String },
   passwordResetExpires: { type: Date },
 
