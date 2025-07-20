@@ -4,7 +4,8 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true },
   password: { type: String, required: true },
   role: { type: String, required: true, enum: ['student', 'recruiter', 'admin'] },
-  name: { type: String },
+  // Default name add kiya gaya hai taaki ye kabhi undefined na rahe
+  name: { type: String, default: 'New User' },
   
   // --- Fields for Password Reset ---
   passwordResetToken: { type: String },

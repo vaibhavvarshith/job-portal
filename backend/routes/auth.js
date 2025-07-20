@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto'); // Node.js module to generate random tokens
 const User = require('../models/User'); // Ensure this path is correct and casing matches the filename
+const sendEmail = require('../utils/sendEmail'); // Import the email utility
 const router = express.Router();
 
 /**
@@ -64,7 +65,7 @@ router.post('/login', async (req, res) => {
 
 /**
  * @route   POST /api/auth/forgot-password
- * @desc    Generate a password reset token
+ * @desc    Generate and send a password reset token via email
  * @access  Public
  */
 router.post('/forgot-password', async (req, res) => {
@@ -80,19 +81,38 @@ router.post('/forgot-password', async (req, res) => {
         // 1. Generate a random token
         const resetToken = crypto.randomBytes(20).toString('hex');
 
-        // 2. Hash the token and save it to the database with an expiry time (e.g., 10 minutes)
+        // 2. Hash the token and save it to the database with an expiry time
         user.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
         user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes from now
         
         await user.save();
 
         // 3. Create the reset URL
-        // NOTE: In a real app, you would use an email service (like Nodemailer) to send this URL to the user.
-        // For now, we will just log it to the console for testing.
         const resetUrl = `https://pro-track-job-portal.vercel.app/reset-password/${resetToken}`;
-        console.log('Password Reset Link (for testing):', resetUrl);
+        
+        // 4. Create the email content
+        const emailHtml = `
+            <h1>Password Reset Request</h1>
+            <p>You requested a password reset. Please click the link below to set a new password. This link will expire in 10 minutes.</p>
+            <a href="${resetUrl}" target="_blank" style="background-color: #007bff; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">Reset Your Password</a>
+        `;
 
-        res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+        // 5. Send the email using the utility
+        try {
+            await sendEmail({
+                email: user.email,
+                subject: 'ProTrack - Password Reset Link',
+                html: emailHtml
+            });
+            res.status(200).json({ message: 'If an account with that email exists, a password reset link has been sent.' });
+        } catch (emailError) {
+            console.error('Email sending error:', emailError);
+            // Clear the token if email fails, so user can try again
+            user.passwordResetToken = undefined;
+            user.passwordResetExpires = undefined;
+            await user.save();
+            return res.status(500).json({ message: 'There was an error sending the email. Please try again later.' });
+        }
 
     } catch (error) {
         console.error('Forgot Password error:', error);
