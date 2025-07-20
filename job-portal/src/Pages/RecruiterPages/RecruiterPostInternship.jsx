@@ -44,7 +44,7 @@ function PostInternshipStandalonePage() {
             const token = localStorage.getItem('authToken');
             if (!token) return; // Don't fetch if not logged in
             try {
-                const response = await fetch('http://localhost:5000/api/profile/recruiter', {
+                const response = await fetch('https://pro-track-job-portal-backend.onrender.com/api/profile/recruiter', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -98,7 +98,7 @@ function PostInternshipStandalonePage() {
         const loadingToast = toast.loading('Posting internship...');
 
         try {
-            const response = await fetch('http://localhost:5000/api/internships/post', {
+            const response = await fetch('https://pro-track-job-portal-backend.onrender.com/api/internships/post', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

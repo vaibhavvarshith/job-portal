@@ -69,7 +69,7 @@ const AuthModule = () => {
         const loadingToast = toast.loading(`Attempting to ${activeView}...`);
 
         try {
-            const response = await fetch(`http://localhost:5000${endpoint}`, {
+            const response = await fetch(`https://pro-track-job-portal-backend.onrender.com${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),

@@ -64,8 +64,8 @@ function ApplicationsApprovalStandalonePage() {
             try {
                 // Fetch applications and profile data in parallel for efficiency
                 const [appsRes, profileRes] = await Promise.all([
-                    fetch('http://localhost:5000/api/applications/recruiter', { headers: { 'Authorization': `Bearer ${token}` } }),
-                    fetch('http://localhost:5000/api/profile/recruiter', { headers: { 'Authorization': `Bearer ${token}` } })
+                    fetch('https://pro-track-job-portal-backend.onrender.com/api/applications/recruiter', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('https://pro-track-job-portal-backend.onrender.com/api/profile/recruiter', { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
 
                 if (!appsRes.ok) {
@@ -122,7 +122,7 @@ function ApplicationsApprovalStandalonePage() {
         const loadingToast = toast.loading('Updating status...');
 
         try {
-            const response = await fetch(`http://localhost:5000/api/applications/${appId}/status`, {
+            const response = await fetch(`https://pro-track-job-portal-backend.onrender.com/api/applications/${appId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
