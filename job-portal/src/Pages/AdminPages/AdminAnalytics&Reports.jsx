@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Chart from 'chart.js/auto';
-import toast from 'react-hot-toast'; // Import toast
+import toast from 'react-hot-toast';
 
-// --- Skeleton Loader Component for Admin Analytics ---
 const AnalyticsSkeleton = () => (
     <>
         <style>{`
@@ -35,7 +34,7 @@ function AnalyticsAndReportsPage() {
     const [reportType, setReportType] = useState('user_list');
     const [dateRange, setDateRange] = useState('last_30_days');
     const [generatedReport, setGeneratedReport] = useState(null);
-    const [loading, setLoading] = useState(true); // New loading state
+    const [loading, setLoading] = useState(true);
     const [kpiData, setKpiData] = useState({
         totalUsers: 0,
         activeJobPostings: 0,
@@ -55,7 +54,6 @@ function AnalyticsAndReportsPage() {
     const appSuccessChartRef = useRef(null);
     const chartInstancesRef = useRef({});
 
-    // Fetch initial KPI and Chart data
     useEffect(() => {
         const fetchAnalyticsData = async () => {
             const token = localStorage.getItem('authToken');
@@ -66,7 +64,7 @@ function AnalyticsAndReportsPage() {
             }
 
             try {
-                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/analytics/dashboard-data`, { // New backend route
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/analytics/dashboard-data`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -97,13 +95,10 @@ function AnalyticsAndReportsPage() {
         fetchAnalyticsData();
     }, [navigate]);
 
-    // Effect for rendering charts when chartData changes
     useEffect(() => {
-        // Destroy existing chart instances before creating new ones
         Object.values(chartInstancesRef.current).forEach(chart => chart.destroy());
-        chartInstancesRef.current = {}; // Clear the ref
+        chartInstancesRef.current = {};
 
-        // User Growth Chart
         if (userGrowthChartRef.current && chartData.userGrowth.labels.length > 0) {
             const ctx = userGrowthChartRef.current.getContext('2d');
             chartInstancesRef.current.userGrowth = new Chart(ctx, {
@@ -124,7 +119,6 @@ function AnalyticsAndReportsPage() {
             });
         }
 
-        // Job Posting Trends Chart
         if (jobPostingChartRef.current && chartData.jobPostingTrends.labels.length > 0) {
             const ctx = jobPostingChartRef.current.getContext('2d');
             chartInstancesRef.current.jobPosting = new Chart(ctx, {
@@ -145,7 +139,6 @@ function AnalyticsAndReportsPage() {
             });
         }
 
-        // Application Success Rate Chart
         if (appSuccessChartRef.current && chartData.applicationSuccessRate.labels.length > 0) {
             const ctx = appSuccessChartRef.current.getContext('2d');
             chartInstancesRef.current.appSuccess = new Chart(ctx, {
@@ -163,11 +156,10 @@ function AnalyticsAndReportsPage() {
             });
         }
 
-        // Cleanup function
         return () => {
             Object.values(chartInstancesRef.current).forEach(chart => chart.destroy());
         };
-    }, [chartData]); // Re-run when chartData changes
+    }, [chartData]);
 
     const handleGenerateReport = async (e) => {
         e.preventDefault();
@@ -175,7 +167,7 @@ function AnalyticsAndReportsPage() {
         const loadingToast = toast.loading('Generating report...');
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/analytics/generate-report`, { // New backend route
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/analytics/generate-report`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -253,13 +245,12 @@ function AnalyticsAndReportsPage() {
                     <Link to="/admin-recruiter-approvals" className="nav-link">
                         <i className="fas fa-check-circle nav-icon"></i> Recruiter Approvals
                     </Link>
-                    <Link to="/admin-analytics-reports" className="nav-link active-nav-link"> {/* Active link */}
+                    <Link to="/admin-analytics-reports" className="nav-link active-nav-link">
                         <i className="fas fa-chart-pie nav-icon"></i> Analytics & Reports
                     </Link>
                 </nav>
             </div>
 
-            {/* Main Content */}
             <div className="main-content">
                 <header className="main-header">
                     <div className="header-content">
@@ -283,7 +274,6 @@ function AnalyticsAndReportsPage() {
                 <main className="content-area">
                     {loading ? <AnalyticsSkeleton /> : (
                         <>
-                            {/* Key Metrics Section */}
                             <section className="kpi-section">
                                 <div className="kpi-card">
                                     <div className="kpi-icon-wrapper bg-blue-100 text-blue-600">
@@ -323,7 +313,6 @@ function AnalyticsAndReportsPage() {
                                 </div>
                             </section>
 
-                            {/* Charts Section */}
                             <section className="charts-section">
                                 <div className="analytics-chart-card">
                                     <h3 className="analytics-chart-title">User Growth Over Time</h3>
@@ -337,7 +326,7 @@ function AnalyticsAndReportsPage() {
                                         <canvas ref={jobPostingChartRef}></canvas>
                                     </div>
                                 </div>
-                                <div className="analytics-chart-card full-width-chart"> {/* For Doughnut or Pie */}
+                                <div className="analytics-chart-card full-width-chart">
                                     <h3 className="analytics-chart-title">Application Success Rate</h3>
                                     <div className="analytics-chart-container doughnut-chart-container">
                                         <canvas ref={appSuccessChartRef}></canvas>
@@ -345,7 +334,6 @@ function AnalyticsAndReportsPage() {
                                 </div>
                             </section>
 
-                            {/* Reports Section */}
                             <section className="reports-section">
                                 <h2 className="section-title">Generate Reports</h2>
                                 <form className="report-form" onSubmit={handleGenerateReport}>
@@ -387,7 +375,6 @@ function AnalyticsAndReportsPage() {
                                     <div className="generated-report-details">
                                         <h3 className="report-preview-title">{generatedReport.title}</h3>
                                         <p className="report-generated-at">Generated on: {generatedReport.generatedAt}</p>
-                                        {/* Basic preview - in a real app, this could be a table or more complex */}
                                         <div className="report-data-preview">
                                             <p>Showing first {generatedReport.data.length} rows (preview):</p>
                                             <pre>{JSON.stringify(generatedReport.data.slice(0, 3), null, 2)}</pre>

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-// SVG Icons
 const MailIcon = ({ className }) => (
   <svg className={className || "icon-default"} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect width="20" height="16" x="2" y="4" rx="2" />
@@ -29,12 +28,10 @@ function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false); // State for loading
-
+  const [isSubmitting, setIsSubmitting] = useState(false); 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Clear previous local errors
-
+    setError(''); 
     if (!email) {
       setError('Please enter your email address.');
       return;
@@ -61,10 +58,8 @@ function ForgotPasswordPage() {
             throw new Error(result.message || 'Failed to send reset link.');
         }
         
-        // Show the success UI
-        setIsSubmitted(true);
-        // We don't show a success toast because the UI changes to show a success message.
-
+                setIsSubmitted(true);
+        
     } catch (err) {
         toast.dismiss(loadingToast);
         toast.error(err.message || 'An error occurred.');

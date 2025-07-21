@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-// --- Skeleton Loader Component ---
+
 const DashboardSkeleton = () => (
     <>
         <style>{`
@@ -31,7 +31,7 @@ const DashboardSkeleton = () => (
 );
 
 
-// Navigation items for the Recruiter sidebar
+
 const navItems = [
     { path: '/recruiter-dashboard', icon: 'fas fa-tachometer-alt', label: 'Dashboard' },
     { path: '/recruiter-post-job', icon: 'fas fa-plus-square', label: 'Post a Job' },
@@ -46,7 +46,7 @@ function RecruiterDashboardStandalonePage() {
 
     const [stats, setStats] = useState({ activeListings: 0, totalApplications: 0, shortlisted: 0 });
     const [recentApplications, setRecentApplications] = useState([]);
-    const [companyData, setCompanyData] = useState(null); // State for header data
+    const [companyData, setCompanyData] = useState(null); 
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -59,7 +59,7 @@ function RecruiterDashboardStandalonePage() {
             }
 
             try {
-                // Fetch all data in parallel
+                
                 const [statsRes, appsRes, profileRes] = await Promise.all([
                     fetch(`${import.meta.env.VITE_BACKEND_URL}/api/recruiter/dashboard-stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
                     fetch(`${import.meta.env.VITE_BACKEND_URL}/api/recruiter/recent-applications`, { headers: { 'Authorization': `Bearer ${token}` } }),
@@ -103,8 +103,7 @@ function RecruiterDashboardStandalonePage() {
 
     return (
         <div className="recruiter-page-layout-container">
-            {/* Sidebar */}
-            <div className="recruiter-page-sidebar">
+                        <div className="recruiter-page-sidebar">
                 <div className="recruiter-page-sidebar-header">
                     <h1 className="recruiter-page-sidebar-title">Pro<span className="trck">Track</span></h1>
                 </div>
@@ -122,8 +121,7 @@ function RecruiterDashboardStandalonePage() {
                 </nav>
             </div>
 
-            {/* Main Content */}
-            <div className="recruiter-page-main-content">
+                        <div className="recruiter-page-main-content">
                 <header className="recruiter-page-main-header">
                     <div className="recruiter-page-header-content">
                         <h1 className="recruiter-page-header-title">Recruiter Dashboard</h1>
@@ -132,8 +130,7 @@ function RecruiterDashboardStandalonePage() {
                                 <i className="fas fa-bell"></i>
                                 <span className="recruiter-notification-dot"></span>
                             </button>
-                            {/* --- DYNAMIC HEADER PROFILE --- */}
-                            <div className="recruiter-page-user-profile">
+                                                        <div className="recruiter-page-user-profile">
                                 <span className="recruiter-page-user-name">{companyData?.companyName || 'Recruiter'}</span>
                                 <div className="recruiter-page-user-avatar">
                                     {companyData?.logoUrl && !companyData.logoUrl.includes('placehold.co') ? (

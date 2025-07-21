@@ -1,10 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Chart from 'chart.js/auto';
-import toast from 'react-hot-toast'; // Import toast
-
-// --- Skeleton Loader Component for Admin Dashboard ---
-const AdminDashboardSkeleton = () => (
+import toast from 'react-hot-toast'; const AdminDashboardSkeleton = () => (
     <>
         <style>{`
             .skeleton-box { background-color: #e0e0e0; border-radius: 8px; animation: skeleton-pulse 1.5s infinite ease-in-out; }
@@ -29,11 +26,9 @@ const AdminDashboardSkeleton = () => (
 function AdminDashboard() {
   const registrationChartRef = useRef(null);
   const activityChartRef = useRef(null);
-  const chartInstancesRef = useRef({}); // To store chart instances for cleanup
-
+  const chartInstancesRef = useRef({}); 
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true); // New loading state
-  const [dashboardStats, setDashboardStats] = useState({
+  const [loading, setLoading] = useState(true);   const [dashboardStats, setDashboardStats] = useState({
     totalUsers: 0,
     students: 0,
     recruiters: 0,
@@ -52,8 +47,7 @@ function AdminDashboard() {
         }
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/dashboard-data`, { // New backend route
-                headers: { 'Authorization': `Bearer ${token}` }
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/dashboard-data`, {                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
             if (!response.ok) {
@@ -81,12 +75,8 @@ function AdminDashboard() {
 
 
   useEffect(() => {
-    // Cleanup previous chart instances if any
     Object.values(chartInstancesRef.current).forEach(chart => chart.destroy());
-    chartInstancesRef.current = {}; // Clear the ref
-
-    // Registration Chart
-    if (registrationChartRef.current && dashboardStats.userRegistrationChartData.labels.length > 0) {
+    chartInstancesRef.current = {};     if (registrationChartRef.current && dashboardStats.userRegistrationChartData.labels.length > 0) {
       const registrationCtx = registrationChartRef.current.getContext('2d');
       chartInstancesRef.current.registrationChart = new Chart(registrationCtx, {
         type: 'line',
@@ -123,8 +113,6 @@ function AdminDashboard() {
         },
       });
     }
-
-    // Activity Chart
     if (activityChartRef.current && dashboardStats.activityMetricsChartData.labels.length > 0) {
       const activityCtx = activityChartRef.current.getContext('2d');
       chartInstancesRef.current.activityChart = new Chart(activityCtx, {
@@ -162,13 +150,10 @@ function AdminDashboard() {
         },
       });
     }
-
-    // Cleanup function to destroy charts when component unmounts
     return () => {
       Object.values(chartInstancesRef.current).forEach(chart => chart.destroy());
     };
-  }, [dashboardStats]); // Re-run when dashboardStats changes
-
+  }, [dashboardStats]); 
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
@@ -199,7 +184,6 @@ function AdminDashboard() {
         </nav>
       </div>
 
-      {/* Main Content */}
       <div className="main-content">
         <header className="main-header">
           <div className="header-content">
@@ -223,7 +207,6 @@ function AdminDashboard() {
         <main className="content-area">
           {loading ? <AdminDashboardSkeleton /> : (
             <>
-              {/* Stats Row */}
               <div className="stats-grid">
                 <div className="stat-card">
                   <h3 className="stat-title">Total Users</h3>
@@ -239,13 +222,11 @@ function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Pending Approvals Card */}
               <div className="pending-approvals-card stat-card">
                 <h3 className="stat-title">Pending Approvals</h3>
                 <p className="stat-value-amber">{dashboardStats.pendingApprovals}</p>
               </div>
 
-              {/* Charts Row */}
               <div className="charts-grid">
                 <div className="chart-card">
                   <h3 className="chart-title">User Registration Chart</h3>

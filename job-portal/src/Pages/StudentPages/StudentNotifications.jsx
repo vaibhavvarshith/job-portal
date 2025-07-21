@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-// --- Skeleton Loader Component for Student Notifications ---
 const StudentNotificationsSkeleton = () => (
     <>
         <style>{`
@@ -22,7 +21,6 @@ const StudentNotificationsSkeleton = () => (
     </>
 );
 
-// Navigation items for the sidebar (These are for display, actual navigation is in StudentLayout)
 const navItems = [
     { path: '/student-dashboard', icon: 'fas fa-tachometer-alt', label: 'Dashboard' },
     { path: '/student-profile', icon: 'fas fa-user-circle', label: 'My Profile' },
@@ -37,11 +35,8 @@ function NotificationsStandalonePage() {
 
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('all'); // 'all', 'unread'
-    const [studentData, setStudentData] = useState(null); // For header (name, avatar)
-
-    // Fetch notifications and student profile data
-    useEffect(() => {
+    const [filter, setFilter] = useState('all');     const [studentData, setStudentData] = useState(null); 
+        useEffect(() => {
         const fetchNotificationsAndProfile = async () => {
             const token = localStorage.getItem('authToken');
             if (!token) {
@@ -51,13 +46,11 @@ function NotificationsStandalonePage() {
             }
 
             try {
-                // Fetch notifications
-                const notificationsRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/notifications`, {
+                                const notificationsRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/notifications`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                // Fetch student profile for header
-                const profileRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/profile/student`, {
+                                const profileRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/profile/student`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -198,7 +191,7 @@ function NotificationsStandalonePage() {
 
     return (
         <div className="student-page-layout-container">
-            {/* Sidebar */}
+            
             <div className="student-page-sidebar">
                 <div className="student-page-sidebar-header">
                     <h1 className="student-page-sidebar-title">Pro <span className="trck">Track</span></h1>
@@ -212,13 +205,13 @@ function NotificationsStandalonePage() {
                         >
                             <i className={`${item.icon} student-page-nav-icon`}></i>
                             {item.label}
-                            {/* Removed direct badgeCounts usage from here */}
+                            
                         </Link>
                     ))}
                 </nav>
             </div>
 
-            {/* Main Content */}
+            
             <div className="student-page-main-content">
                 <header className="student-page-main-header">
                     <div className="student-page-header-content">
@@ -226,7 +219,7 @@ function NotificationsStandalonePage() {
                         <div className="student-page-header-actions">
                             <button className="student-page-notification-button" title="Notifications">
                                 <i className="fas fa-bell"></i>
-                                {/* Removed direct badgeCounts usage from here */}
+                                
                             </button>
                             <div className="student-page-user-profile">
                                 <span className="student-page-user-name">{studentData?.fullName?.split(' ')[0] || 'Student'}</span>
@@ -278,8 +271,7 @@ function NotificationsStandalonePage() {
                                 <ul className="notification-list">
                                     {filteredNotifications.map(notification => (
                                         <li
-                                            key={notification._id} // Use _id from MongoDB
-                                            className={`notification-item ${notification.read ? 'read' : 'unread'}`}
+                                            key={notification._id}                                             className={`notification-item ${notification.read ? 'read' : 'unread'}`}
                                         >
                                             <div className="notification-icon-area">
                                                 <i className={`${notification.icon || 'fas fa-info-circle'} notification-type-icon type-${notification.type}`}></i>
@@ -287,7 +279,7 @@ function NotificationsStandalonePage() {
                                             <div className="notification-content-area">
                                                 <div className="notification-title-bar">
                                                     <h4 className="notification-title">{notification.title}</h4>
-                                                    <span className="notification-date">{new Date(notification.createdAt).toLocaleString()}</span> {/* Use createdAt */}
+                                                    <span className="notification-date">{new Date(notification.createdAt).toLocaleString()}</span> 
                                                 </div>
                                                 <p className="notification-message">{notification.message}</p>
                                                 {notification.link && notification.link !== '#' && (

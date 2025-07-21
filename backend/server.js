@@ -1,36 +1,24 @@
 const express = require('express');
-const cors = require('cors'); // Use the cors package
-require('dotenv').config();
+const cors = require('cors'); require('dotenv').config();
 const connectDB = require('./config/db');
 const path = require('path');
 
-// Initialize Express app
 const app = express();
 
-// Connect to Database
 connectDB();
 
-// --- Middlewares ---
 
-// CORS Configuration
 const corsOptions = {
-  origin: '*', // Allow all origins (for debugging)
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allow all common HTTP methods
-  credentials: true, // Allow cookies to be sent (if you use them)
-  optionsSuccessStatus: 204 // Some legacy browsers (IE11, various SmartTVs) choke on 200
-};
+  origin: '*',   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',   credentials: true,   optionsSuccessStatus: 204 };
 
-app.use(cors(corsOptions)); // Use the cors middleware
-
+app.use(cors(corsOptions)); 
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Serve static files from the 'uploads' directory (for resumes)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
-// --- Define Routes ---
 console.log("Registering API routes...");
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/jobs', require('./routes/jobs'));
@@ -46,11 +34,9 @@ app.use('/api/admin', require('./routes/admin'));
 console.log("✅ All API routes registration initiated.");
 
 
-// A simple test route
 app.get('/', (req, res) => res.send('API is running...'));
 
 
-// --- Global Error Handling Middleware ---
 app.use((err, req, res, next) => {
   console.error("An unexpected error occurred:", err.stack);
   res.status(500).json({ 

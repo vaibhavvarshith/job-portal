@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-// --- Skeleton Loader Component for Student Dashboard ---
 const StudentDashboardSkeleton = () => (
     <>
         <style>{`
@@ -25,14 +24,11 @@ const StudentDashboardSkeleton = () => (
     </>
 );
 
-// Navigation items for the sidebar
 const navItems = [
     { path: '/student-dashboard', icon: 'fas fa-tachometer-alt', label: 'Dashboard' },
     { path: '/student-profile', icon: 'fas fa-user-circle', label: 'My Profile' },
     { path: '/student-resume', icon: 'fas fa-file-alt', label: 'Resume Manager' },
-    { path: '/student-applications', icon: 'fas fa-inbox', label: 'Applications' }, // Badge will be dynamic
-    { path: '/student-notifications', icon: 'fas fa-bell', label: 'Notifications' }, // Badge will be dynamic
-];
+    { path: '/student-applications', icon: 'fas fa-inbox', label: 'Applications' },     { path: '/student-notifications', icon: 'fas fa-bell', label: 'Notifications' }, ];
 
 function StudentDashboardPage() {
     const location = useLocation();
@@ -42,8 +38,7 @@ function StudentDashboardPage() {
     const [studentData, setStudentData] = useState({
         fullName: 'Student',
         profilePicture: 'https://placehold.co/120x120/15803D/FFFFFF?text=SU'
-    }); // For header (name, avatar)
-    const [dashboardStats, setDashboardStats] = useState({
+    });     const [dashboardStats, setDashboardStats] = useState({
         profileCompletion: 0,
         applicationStatus: { applied: 0, interviews: 0, offers: 0, rejected: 0 },
         recentActivity: [],
@@ -99,7 +94,7 @@ function StudentDashboardPage() {
 
     return (
         <div className="student-page-layout-container">
-            {/* Sidebar */}
+            
             <div className="student-page-sidebar">
                 <div className="student-page-sidebar-header">
                     <h1 className="student-page-sidebar-title">Pro <span className="trck">Track</span></h1>
@@ -113,10 +108,10 @@ function StudentDashboardPage() {
                         >
                             <i className={`${item.icon} student-page-nav-icon`}></i>
                             {item.label}
-                            {/* Dynamically show badge for applications/notifications if data is available */}
+                            
                             {item.path === '/student-applications' && dashboardStats.applicationStatus.applied > 0 && 
                                 <span className="student-page-nav-badge">{dashboardStats.applicationStatus.applied}</span>}
-                            {/* You'd need a separate notification count from backend for this */}
+                            
                             {item.path === '/student-notifications' && false && 
                                 <span className="student-page-nav-badge">0</span>} 
                         </Link>
@@ -124,7 +119,7 @@ function StudentDashboardPage() {
                 </nav>
             </div>
 
-            {/* Main Content */}
+            
             <div className="student-page-main-content">
                 <header className="student-page-main-header">
                     <div className="student-page-header-content">
@@ -154,9 +149,9 @@ function StudentDashboardPage() {
                 <main className="student-page-content-area">
                     {loading ? <StudentDashboardSkeleton /> : (
                         <>
-                            {/* Dashboard Specific Content */}
+                            
                             <div className="dashboard-grid">
-                                {/* Profile Completion Card */}
+                                
                                 <div className="dashboard-card profile-completion-card">
                                     <h3 className="card-title">Profile Completion</h3>
                                     <div className="progress-bar-container">
@@ -173,7 +168,7 @@ function StudentDashboardPage() {
                                     </Link>
                                 </div>
 
-                                {/* Application Status Card */}
+                                
                                 <div className="dashboard-card application-status-card">
                                     <h3 className="card-title">Application Status</h3>
                                     <ul className="status-list">
@@ -184,7 +179,7 @@ function StudentDashboardPage() {
                                     </ul>
                                 </div>
 
-                                {/* Recent Activity Card */}
+                                
                                 <div className="dashboard-card recent-activity-card">
                                     <h3 className="card-title">Recent Activity</h3>
                                     <ul className="activity-list">
@@ -205,7 +200,7 @@ function StudentDashboardPage() {
                                 </div>
                             </div>
 
-                            {/* Recommended Jobs Section */}
+                            
                             <div className="dashboard-card recommended-jobs-section">
                                 <h3 className="card-title">Recommended Jobs</h3>
                                 <div className="recommended-jobs-grid">
@@ -227,7 +222,7 @@ function StudentDashboardPage() {
                                                 </div>
                                                 <div className="job-details-recommended">
                                                     <p><i className="fas fa-map-marker-alt"></i> {job.location}</p>
-                                                    <p><i className="fas fa-dollar-sign"></i> {job.salary || 'Negotiable'}</p> {/* Use actual salary if available */}
+                                                    <p><i className="fas fa-dollar-sign"></i> {job.salary || 'Negotiable'}</p> 
                                                     <p><i className="fas fa-clock"></i> Posted {new Date(job.createdAt).toLocaleDateString()}</p>
                                                 </div>
                                                 <div className="job-skills-recommended">

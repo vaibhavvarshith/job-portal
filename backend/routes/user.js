@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const User = require('../models/User'); // User model को import करें
-
+const User = require('../models/User'); 
 /**
  * @route   PATCH /api/user/update-email
  * @desc    Update the email of the logged-in user
@@ -11,8 +10,7 @@ const User = require('../models/User'); // User model को import करें
 router.patch('/update-email', auth, async (req, res) => {
     const { email } = req.body;
 
-    // ईमेल वैलिडेशन (basic)
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+        if (!email || !/\S+@\S+\.\S+/.test(email)) {
         return res.status(400).json({ message: 'Please provide a valid email address.' });
     }
 
@@ -23,8 +21,7 @@ router.patch('/update-email', auth, async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        // जाँचें कि क्या नया ईमेल पहले से मौजूद है (यदि यह वर्तमान ईमेल नहीं है)
-        if (user.email !== email) {
+                if (user.email !== email) {
             const existingUserWithEmail = await User.findOne({ email });
             if (existingUserWithEmail) {
                 return res.status(409).json({ message: 'This email is already registered.' });

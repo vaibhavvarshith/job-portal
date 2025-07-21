@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-// --- Skeleton Loader Component for Student Profile ---
 const StudentProfileSkeleton = () => (
     <>
         <style>{`
@@ -34,7 +33,6 @@ const StudentProfileSkeleton = () => (
     </>
 );
 
-// Navigation items for the sidebar
 const navItems = [
     { path: '/student-dashboard', icon: 'fas fa-tachometer-alt', label: 'Dashboard' },
     { path: '/student-profile', icon: 'fas fa-user-circle', label: 'My Profile' },
@@ -65,35 +63,28 @@ function MyProfileStandalonePage() {
 
     const [profileData, setProfileData] = useState({
         fullName: '',
-        email: '', // Email will be fetched from User model, not directly from StudentProfile
-        phone: '',
+        email: '',         phone: '',
         linkedin: '',
         github: '',
         portfolio: '',
         bio: '',
-        profilePicture: 'https://placehold.co/120x120/15803D/FFFFFF?text=JD', // Default placeholder
-    });
-    // Store original profile data (including email) for comparison and reset
-    const [originalProfileData, setOriginalProfileData] = useState(profileData); 
+        profilePicture: 'https://placehold.co/120x120/15803D/FFFFFF?text=JD',     });
+        const [originalProfileData, setOriginalProfileData] = useState(profileData); 
     const [educationEntries, setEducationEntries] = useState([]);
     const [experienceEntries, setExperienceEntries] = useState([]);
     const [skills, setSkills] = useState([]);
     const [newSkill, setNewSkill] = useState('');
     const [loading, setLoading] = useState(true);
-    const [isEditing, setIsEditing] = useState(false); // New state for edit mode
-
-    // State for Education Modal
-    const [showEducationModal, setShowEducationModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false); 
+        const [showEducationModal, setShowEducationModal] = useState(false);
     const [currentEducation, setCurrentEducation] = useState(initialEducationEntry);
     const [editingEducationId, setEditingEducationId] = useState(null);
 
-    // State for Experience Modal
-    const [showExperienceModal, setShowExperienceModal] = useState(false);
+        const [showExperienceModal, setShowExperienceModal] = useState(false);
     const [currentExperience, setCurrentExperience] = useState(initialExperienceEntry);
     const [editingExperienceId, setEditingExperienceId] = useState(null);
 
-    // Fetch profile data on component mount
-    useEffect(() => {
+        useEffect(() => {
         const fetchProfile = async () => {
             const token = localStorage.getItem('authToken');
             if (!token) {
@@ -109,9 +100,7 @@ function MyProfileStandalonePage() {
 
                 if (response.status === 404) {
                     toast("No student profile found. Please create one.", { icon: 'ℹ️' });
-                    // If profile not found, set initial empty data. Email will come from user's auth token.
-                    // For now, set a placeholder email.
-                    setProfileData(prev => ({ ...prev, email: 'your.email@example.com' })); 
+                                                            setProfileData(prev => ({ ...prev, email: 'your.email@example.com' })); 
                     setOriginalProfileData(prev => ({ ...prev, email: 'your.email@example.com' })); 
                 } else if (!response.ok) {
                     throw new Error('Failed to fetch profile.');
@@ -119,8 +108,7 @@ function MyProfileStandalonePage() {
                     const data = await response.json();
                     const fetchedProfile = {
                         fullName: data.fullName || '',
-                        // Email will be fetched from the user object
-                        email: data.user?.email || '', 
+                                                email: data.user?.email || '', 
                         phone: data.phone || '',
                         linkedin: data.linkedin || '',
                         github: data.github || '',
@@ -129,8 +117,7 @@ function MyProfileStandalonePage() {
                         profilePicture: data.profilePicture || 'https://placehold.co/120x120/15803D/FFFFFF?text=JD',
                     };
                     setProfileData(fetchedProfile);
-                    setOriginalProfileData(fetchedProfile); // Store original fetched data
-                    setEducationEntries(data.education || []);
+                    setOriginalProfileData(fetchedProfile);                     setEducationEntries(data.education || []);
                     setExperienceEntries(data.experience || []);
                     setSkills(data.skills || []);
                 }
@@ -143,43 +130,36 @@ function MyProfileStandalonePage() {
         fetchProfile();
     }, [navigate]);
 
-    // Handle input changes for main profile data
-    const handleInputChange = (e) => {
+        const handleInputChange = (e) => {
         const { name, value } = e.target;
         setProfileData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Handle profile picture file change (converts to Data URL for display/storage)
-    const handleFileChange = (e) => {
+        const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = (event) => {
                 setProfileData(prev => ({ ...prev, profilePicture: event.target.result }));
             };
-            reader.readAsDataURL(file); // Reads file as base64 Data URL
-        }
+            reader.readAsDataURL(file);         }
     };
 
-    // Handle adding a new skill
-    const handleAddSkill = () => {
+        const handleAddSkill = () => {
         if (newSkill.trim() && !skills.includes(newSkill.trim())) {
             setSkills([...skills, newSkill.trim()]);
             setNewSkill('');
         }
     };
 
-    // Handle removing an existing skill
-    const handleRemoveSkill = (skillToRemove) => {
+        const handleRemoveSkill = (skillToRemove) => {
         setSkills(skills.filter(skill => skill !== skillToRemove));
     };
 
-    // --- Education Modal Functions ---
-    const openEducationModal = (education = null) => {
+        const openEducationModal = (education = null) => {
         if (education) {
             setCurrentEducation(education);
-            setEditingEducationId(education._id); // Use _id for existing entries
-        } else {
+            setEditingEducationId(education._id);         } else {
             setCurrentEducation(initialEducationEntry);
             setEditingEducationId(null);
         }
@@ -206,8 +186,7 @@ function MyProfileStandalonePage() {
                 )
             );
         } else {
-            // For new entries, DO NOT assign an _id. Let Mongoose generate it.
-            setEducationEntries([...educationEntries, { ...currentEducation }]);
+                        setEducationEntries([...educationEntries, { ...currentEducation }]);
         }
         closeEducationModal();
     };
@@ -218,12 +197,10 @@ function MyProfileStandalonePage() {
         }
     };
 
-    // --- Experience Modal Functions ---
-    const openExperienceModal = (experience = null) => {
+        const openExperienceModal = (experience = null) => {
         if (experience) {
             setCurrentExperience(experience);
-            setEditingExperienceId(experience._id); // Use _id for existing entries
-        } else {
+            setEditingExperienceId(experience._id);         } else {
             setCurrentExperience(initialExperienceEntry);
             setEditingExperienceId(null);
         }
@@ -250,8 +227,7 @@ function MyProfileStandalonePage() {
                 )
             );
         } else {
-            // For new entries, DO NOT assign an _id. Let Mongoose generate it.
-            setExperienceEntries([...experienceEntries, { ...currentExperience }]);
+                        setExperienceEntries([...experienceEntries, { ...currentExperience }]);
         }
         closeExperienceModal();
     };
@@ -262,8 +238,7 @@ function MyProfileStandalonePage() {
         }
     };
 
-    // Main form submission to save all profile data to backend
-    const handleSubmit = async (e) => {
+        const handleSubmit = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('authToken');
         if (!token) {
@@ -274,11 +249,9 @@ function MyProfileStandalonePage() {
 
         const loadingToast = toast.loading('Saving profile...');
         let profileSaveSuccess = false;
-        let emailUpdateSuccess = true; // Assume true if email not changed or no error
-
+        let emailUpdateSuccess = true; 
         try {
-            // Check if email has changed and update separately
-            if (profileData.email !== originalProfileData.email) {
+                        if (profileData.email !== originalProfileData.email) {
                 const emailUpdateResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/user/update-email`, {
                     method: 'PATCH',
                     headers: {
@@ -297,18 +270,15 @@ function MyProfileStandalonePage() {
                 }
             }
 
-            // Remove the email field from profileData as it's part of the User model, not StudentProfile
-            const { email, ...dataToSend } = profileData; 
+                        const { email, ...dataToSend } = profileData; 
 
             const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/profile/student`, {
-                method: 'POST', // Use POST for upsert (create or update)
-                headers: {
+                method: 'POST',                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    ...dataToSend, // Now without the email
-                    education: educationEntries,
+                    ...dataToSend,                     education: educationEntries,
                     experience: experienceEntries,
                     skills: skills,
                 })
@@ -324,11 +294,9 @@ function MyProfileStandalonePage() {
             profileSaveSuccess = true;
             toast.success('Profile saved successfully!');
             
-            // Update state with canonical data from backend, especially new _ids for subdocuments
-            const updatedProfileData = {
+                        const updatedProfileData = {
                 fullName: result.profile.fullName || '',
-                email: result.profile.user?.email || profileData.email, // Use updated email if changed, or fetched
-                phone: result.profile.phone || '',
+                email: result.profile.user?.email || profileData.email,                 phone: result.profile.phone || '',
                 linkedin: result.profile.linkedin || '',
                 github: result.profile.github || '',
                 portfolio: result.profile.portfolio || '',
@@ -336,28 +304,21 @@ function MyProfileStandalonePage() {
                 profilePicture: result.profile.profilePicture || 'https://placehold.co/120x120/15803D/FFFFFF?text=JD',
             };
             setProfileData(updatedProfileData);
-            setOriginalProfileData(updatedProfileData); // Update original data after successful save
-            setEducationEntries(result.profile.education || []);
+            setOriginalProfileData(updatedProfileData);             setEducationEntries(result.profile.education || []);
             setExperienceEntries(result.profile.experience || []);
             setSkills(result.profile.skills || []);
-            setIsEditing(false); // Exit edit mode on successful save
-
+            setIsEditing(false); 
         } catch (error) {
             toast.dismiss(loadingToast);
-            // If profile save failed, but email update succeeded, still show error for profile.
-            // If email update failed, it would have thrown an error already.
-            toast.error(error.message || "An error occurred while saving profile.");
-            // If profile save failed, but email was updated, revert email in UI to original
-            if (!profileSaveSuccess && !emailUpdateSuccess) {
+                                    toast.error(error.message || "An error occurred while saving profile.");
+                        if (!profileSaveSuccess && !emailUpdateSuccess) {
                 setProfileData(prev => ({ ...prev, email: originalProfileData.email }));
             }
         }
     };
 
-    // Handle canceling edits
-    const handleCancelEdit = () => {
-        // Revert to original data stored when entering edit mode or on initial fetch
-        setProfileData(originalProfileData); 
+        const handleCancelEdit = () => {
+                setProfileData(originalProfileData); 
         setEducationEntries(originalProfileData.education || []); 
         setExperienceEntries(originalProfileData.experience || []);
         setSkills(originalProfileData.skills || []);
@@ -373,7 +334,7 @@ function MyProfileStandalonePage() {
 
     return (
         <div className="student-page-layout-container">
-            {/* Sidebar */}
+            
             <div className="student-page-sidebar">
                 <div className="student-page-sidebar-header">
                     <h1 className="student-page-sidebar-title">Pro <span className="trck">Track</span></h1>
@@ -392,7 +353,7 @@ function MyProfileStandalonePage() {
                 </nav>
             </div>
 
-            {/* Main Content */}
+            
             <div className="student-page-main-content">
                 <header className="student-page-main-header">
                     <div className="student-page-header-content">
@@ -425,8 +386,7 @@ function MyProfileStandalonePage() {
                             <div className="profile-header-section">
                                 <div className="profile-picture-container">
                                     <img src={profileData.profilePicture} alt="Profile" className="profile-picture" />
-                                    {isEditing && ( // Show upload button only in edit mode
-                                        <label htmlFor="profilePictureInput" className="profile-picture-upload-btn">
+                                    {isEditing && (                                         <label htmlFor="profilePictureInput" className="profile-picture-upload-btn">
                                             <i className="fas fa-camera"></i>
                                         </label>
                                     )}
@@ -442,8 +402,7 @@ function MyProfileStandalonePage() {
                                     <h2>{profileData.fullName || "Your Name"}</h2>
                                     <p>{profileData.email || "your.email@example.com"}</p>
                                 </div>
-                                {!isEditing && ( // Show Edit button only in view mode
-                                    <button type="button" onClick={() => setIsEditing(true)} className="edit-profile-btn">
+                                {!isEditing && (                                     <button type="button" onClick={() => setIsEditing(true)} className="edit-profile-btn">
                                         <i className="fas fa-pencil-alt"></i> Edit Profile
                                     </button>
                                 )}
@@ -462,7 +421,7 @@ function MyProfileStandalonePage() {
                                     </div>
                                     <div className="form-group">
                                         <label htmlFor="email">Email Address</label>
-                                        {/* Email field is now conditionally editable */}
+                                        
                                         {isEditing ? (
                                             <input type="email" id="email" name="email" value={profileData.email} onChange={handleInputChange} required />
                                         ) : (
@@ -527,8 +486,7 @@ function MyProfileStandalonePage() {
                             <div className="profile-section">
                                 <div className="section-header">
                                     <h3 className="section-title">Education</h3>
-                                    {isEditing && ( // Show add button only in edit mode
-                                        <button type="button" onClick={() => openEducationModal()} className="add-entry-button-inline">
+                                    {isEditing && (                                         <button type="button" onClick={() => openEducationModal()} className="add-entry-button-inline">
                                             <i className="fas fa-plus"></i> Add Education
                                         </button>
                                     )}
@@ -540,8 +498,7 @@ function MyProfileStandalonePage() {
                                             <p>{entry.institution} - Graduated {entry.gradYear}</p>
                                             {entry.gpa && <p>GPA: {entry.gpa}</p>}
                                         </div>
-                                        {isEditing && ( // Show edit/delete buttons only in edit mode
-                                            <div className="entry-card-actions">
+                                        {isEditing && (                                             <div className="entry-card-actions">
                                                 <button type="button" onClick={() => openEducationModal(entry)} className="edit-entry-btn" title="Edit">
                                                     <i className="fas fa-pencil-alt"></i>
                                                 </button>
@@ -557,8 +514,7 @@ function MyProfileStandalonePage() {
                             <div className="profile-section">
                                 <div className="section-header">
                                     <h3 className="section-title">Work Experience</h3>
-                                    {isEditing && ( // Show add button only in edit mode
-                                        <button type="button" onClick={() => openExperienceModal()} className="add-entry-button-inline">
+                                    {isEditing && (                                         <button type="button" onClick={() => openExperienceModal()} className="add-entry-button-inline">
                                             <i className="fas fa-plus"></i> Add Experience
                                         </button>
                                     )}
@@ -570,8 +526,7 @@ function MyProfileStandalonePage() {
                                             <p>{entry.startDate} - {entry.endDate}</p>
                                             <p className="entry-description">{entry.description}</p>
                                         </div>
-                                        {isEditing && ( // Show edit/delete buttons only in edit mode
-                                            <div className="entry-card-actions">
+                                        {isEditing && (                                             <div className="entry-card-actions">
                                                 <button type="button" onClick={() => openExperienceModal(entry)} className="edit-entry-btn" title="Edit">
                                                     <i className="fas fa-pencil-alt"></i>
                                                 </button>
@@ -590,14 +545,12 @@ function MyProfileStandalonePage() {
                                     {skills.map(skill => (
                                         <span key={skill} className="skill-tag-profile">
                                             {skill}
-                                            {isEditing && ( // Show remove button only in edit mode
-                                                <button type="button" onClick={() => handleRemoveSkill(skill)} className="remove-skill-btn">&times;</button>
+                                            {isEditing && (                                                 <button type="button" onClick={() => handleRemoveSkill(skill)} className="remove-skill-btn">&times;</button>
                                             )}
                                         </span>
                                     ))}
                                 </div>
-                                {isEditing && ( // Show add skill input/button only in edit mode
-                                    <div className="add-skill-container">
+                                {isEditing && (                                     <div className="add-skill-container">
                                         <input
                                             type="text"
                                             value={newSkill}
@@ -612,8 +565,7 @@ function MyProfileStandalonePage() {
                                 )}
                             </div>
 
-                            {isEditing && ( // Show form actions only in edit mode
-                                <div className="form-actions">
+                            {isEditing && (                                 <div className="form-actions">
                                     <button type="button" onClick={handleCancelEdit} className="cancel-btn-profile">
                                         Cancel
                                     </button>
@@ -627,7 +579,7 @@ function MyProfileStandalonePage() {
                 </main>
             </div>
 
-            {/* Education Modal */}
+            
             {showEducationModal && (
                 <div className="modal-overlay-profile">
                     <div className="modal-content-profile">
@@ -668,7 +620,7 @@ function MyProfileStandalonePage() {
                 </div>
             )}
 
-            {/* Experience Modal */}
+            
             {showExperienceModal && (
                 <div className="modal-overlay-profile">
                     <div className="modal-content-profile">

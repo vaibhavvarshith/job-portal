@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
-// Navigation items for the Recruiter sidebar
 const navItems = [
     { path: '/recruiter-dashboard', icon: 'fas fa-tachometer-alt', label: 'Dashboard' },
     { path: '/recruiter-post-job', icon: 'fas fa-plus-square', label: 'Post a Job' },
@@ -34,14 +33,11 @@ function PostJobStandalonePage() {
     const [jobData, setJobData] = useState(initialJobData);
     const [currentSkill, setCurrentSkill] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [companyData, setCompanyData] = useState(null); // State for header data
-
-    // Fetch company profile for the header
-    useEffect(() => {
+    const [companyData, setCompanyData] = useState(null); 
+        useEffect(() => {
         const fetchProfileForHeader = async () => {
             const token = localStorage.getItem('authToken');
-            if (!token) return; // Don't fetch if not logged in
-            try {
+            if (!token) return;             try {
                 const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/profile/recruiter`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -133,8 +129,7 @@ function PostJobStandalonePage() {
 
     return (
         <div className="recruiter-page-layout-container">
-            {/* Sidebar */}
-            <div className="recruiter-page-sidebar">
+                        <div className="recruiter-page-sidebar">
                 <div className="recruiter-page-sidebar-header">
                     <h1 className="recruiter-page-sidebar-title">Pro<span className="trck">Track</span></h1>
                 </div>
@@ -152,8 +147,7 @@ function PostJobStandalonePage() {
                 </nav>
             </div>
 
-            {/* Main Content */}
-            <div className="recruiter-page-main-content">
+                        <div className="recruiter-page-main-content">
                 <header className="recruiter-page-main-header">
                     <div className="recruiter-page-header-content">
                         <h1 className="recruiter-page-header-title">Post a New Job</h1>
@@ -162,8 +156,7 @@ function PostJobStandalonePage() {
                                 <i className="fas fa-bell"></i>
                                 <span className="recruiter-notification-dot"></span>
                             </button>
-                            {/* --- DYNAMIC HEADER PROFILE --- */}
-                            <div className="recruiter-page-user-profile">
+                                                        <div className="recruiter-page-user-profile">
                                 <span className="recruiter-page-user-name">{companyData?.companyName || 'Recruiter'}</span>
                                 <div className="recruiter-page-user-avatar">
                                     {companyData?.logoUrl && !companyData.logoUrl.includes('placehold.co') ? (

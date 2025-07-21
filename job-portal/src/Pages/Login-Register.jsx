@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast'; // Import toast
-
-// Main component for the Authentication Module
+import toast from 'react-hot-toast'; 
 const AuthModule = () => {
     const [activeView, setActiveView] = useState('login');
     const [activeRole, setActiveRole] = useState('student');
@@ -21,28 +19,24 @@ const AuthModule = () => {
         }
     };
 
-    // Basic email validation
-    const validateEmail = (emailToValidate) => {
+        const validateEmail = (emailToValidate) => {
         if (!emailToValidate) return "Email is required.";
         if (!/\S+@\S+\.\S+/.test(emailToValidate)) return "Email is invalid.";
         return null;
     };
 
-    // Basic password validation
-    const validatePassword = (passwordToValidate) => {
+        const validatePassword = (passwordToValidate) => {
         if (!passwordToValidate) return "Password is required.";
         if (passwordToValidate.length < 6) return "Password must be at least 6 characters.";
         return null;
     };
 
-    // Form submission handler with backend integration and toast notifications
-    const handleSubmit = async (e) => {
+        const handleSubmit = async (e) => {
         e.preventDefault();
         setErrors({});
         let currentErrors = {};
 
-        // --- Validation Logic (unchanged) ---
-        const emailError = validateEmail(email);
+                const emailError = validateEmail(email);
         if (emailError) currentErrors.email = emailError;
 
         const passwordError = validatePassword(password);
@@ -61,12 +55,10 @@ const AuthModule = () => {
             return;
         }
 
-        // --- Backend API Call with Toasts ---
-        const endpoint = activeView === 'login' ? '/api/auth/login' : '/api/auth/register';
+                const endpoint = activeView === 'login' ? '/api/auth/login' : '/api/auth/register';
         const body = { email, password, role: activeRole };
         
-        // Show a loading toast while the request is in progress
-        const loadingToast = toast.loading(`Attempting to ${activeView}...`);
+                const loadingToast = toast.loading(`Attempting to ${activeView}...`);
 
         try {
             const response = await fetch(`https://pro-track-job-portal-backend.onrender.com${endpoint}`, {
@@ -77,15 +69,12 @@ const AuthModule = () => {
 
             const data = await response.json();
             
-            // Dismiss the loading toast once we get a response
-            toast.dismiss(loadingToast);
+                        toast.dismiss(loadingToast);
 
             if (!response.ok) {
-                // Use toast.error for server-side errors
-                toast.error(data.message || 'An error occurred. Please try again.');
+                                toast.error(data.message || 'An error occurred. Please try again.');
             } else {
-                // Use toast.success for successful operations
-                toast.success(data.message);
+                                toast.success(data.message);
 
                 if (activeView === 'login' && data.token) {
                     localStorage.setItem('authToken', data.token);
@@ -100,11 +89,9 @@ const AuthModule = () => {
                 }
             }
         } catch (error) {
-            // Dismiss the loading toast on network error as well
-            toast.dismiss(loadingToast);
+                        toast.dismiss(loadingToast);
             console.error('API call failed:', error);
-            // Use toast.error for network errors
-            toast.error('Could not connect to the server. Please check your connection.');
+                        toast.error('Could not connect to the server. Please check your connection.');
         }
     };
 

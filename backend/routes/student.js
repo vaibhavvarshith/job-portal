@@ -4,11 +4,9 @@ const auth = require('../middleware/auth');
 const StudentProfile = require('../models/studentProfile');
 const Application = require('../models/Application');
 const Job = require('../models/Job');
-const Internship = require('../models/Internship'); // Assuming you might use this for recommendations too
-const User = require('../models/User');
+const Internship = require('../models/Internship'); const User = require('../models/User');
 const CompanyProfile = require('../models/CompanyProfile');
-const Notification = require('../models/Notification'); // Import Notification model
-
+const Notification = require('../models/Notification'); 
 /**
  * @route   GET /api/student/dashboard
  * @desc    Get student dashboard data (profile completion, application stats, recent activity, recommended jobs)
@@ -18,8 +16,7 @@ router.get('/dashboard', auth, async (req, res) => {
     try {
         const studentId = req.user.id;
 
-        // 1. Fetch Student Profile
-        const studentProfile = await StudentProfile.findOne({ user: studentId }).populate('user', 'email');
+                const studentProfile = await StudentProfile.findOne({ user: studentId }).populate('user', 'email');
 
         let profileCompletion = 0;
         let studentName = req.user.name || 'Student';
@@ -46,13 +43,11 @@ router.get('/dashboard', auth, async (req, res) => {
             if (studentProfile.experience && studentProfile.experience.length > 0) completedFields++;
             if (studentProfile.skills && studentProfile.skills.length > 0) completedFields++;
             
-            const totalTrackedFields = 9; // Adjust based on how many fields you actually track for completion
-            profileCompletion = Math.round((completedFields / totalTrackedFields) * 100);
+            const totalTrackedFields = 9;             profileCompletion = Math.round((completedFields / totalTrackedFields) * 100);
             if (profileCompletion > 100) profileCompletion = 100;
         }
 
-        // 2. Fetch Application Status
-        const applications = await Application.find({ studentId: studentId });
+                const applications = await Application.find({ studentId: studentId });
         const applicationStatus = {
             applied: applications.length,
             interviews: applications.filter(app => app.status === 'Interview Scheduled').length,
@@ -60,8 +55,7 @@ router.get('/dashboard', auth, async (req, res) => {
             rejected: applications.filter(app => app.status === 'Rejected').length,
         };
 
-        // 3. Fetch Recent Activity (from applications)
-        const recentActivity = applications
+                const recentActivity = applications
             .sort((a, b) => b.createdAt - a.createdAt)
             .slice(0, 5)
             .map(app => ({
@@ -71,16 +65,14 @@ router.get('/dashboard', auth, async (req, res) => {
                 icon: 'fas fa-file-signature'
             }));
 
-        // 4. Fetch Recommended Jobs (latest 5 jobs)
-        const recommendedJobs = await Job.find({})
+                const recommendedJobs = await Job.find({})
             .sort({ createdAt: -1 })
             .limit(5)
             .populate({
                 path: 'postedBy',
                 select: 'name email',
                 populate: {
-                    path: 'companyProfile', // This field is now in User model
-                    select: 'companyName logoUrl'
+                    path: 'companyProfile',                     select: 'companyName logoUrl'
                 }
             })
             .lean();
@@ -105,8 +97,7 @@ router.get('/dashboard', auth, async (req, res) => {
             };
         });
 
-        // 5. Fetch Notification Count for Layout
-        const unreadNotificationCount = await Notification.countDocuments({ studentId: studentId, read: false });
+                const unreadNotificationCount = await Notification.countDocuments({ studentId: studentId, read: false });
 
 
         res.json({
@@ -116,8 +107,7 @@ router.get('/dashboard', auth, async (req, res) => {
             applicationStatus,
             recentActivity,
             recommendedJobs: mappedRecommendedJobs,
-            notificationCount: unreadNotificationCount, // Send unread count
-        });
+            notificationCount: unreadNotificationCount,         });
 
     } catch (error) {
         console.error('Error fetching student dashboard data:', error);
@@ -140,8 +130,7 @@ router.get('/applications', auth, async (req, res) => {
     try {
         const applications = await Application.find({ studentId: req.user.id })
             .populate('jobId', 'jobTitle jobType')
-            .populate('recruiterId', 'companyName'); // Populate recruiter details for company name
-        
+            .populate('recruiterId', 'companyName');         
         res.status(200).json(applications);
     } catch (error) {
         console.error('Error fetching student applications:', error);
@@ -149,7 +138,6 @@ router.get('/applications', auth, async (req, res) => {
     }
 });
 
-// --- NEW NOTIFICATION ROUTES ---
 
 /**
  * @route   GET /api/student/notifications
@@ -162,8 +150,7 @@ router.get('/notifications', auth, async (req, res) => {
     }
     try {
         const notifications = await Notification.find({ studentId: req.user.id })
-                                                .sort({ createdAt: -1 }); // Newest first
-        res.status(200).json(notifications);
+                                                .sort({ createdAt: -1 });         res.status(200).json(notifications);
     } catch (error) {
         console.error('Error fetching student notifications:', error);
         res.status(500).json({ message: 'Server error fetching notifications.' });
@@ -183,8 +170,7 @@ router.patch('/notifications/:id/status', auth, async (req, res) => {
         const { id } = req.params;
         const { read } = req.body;
         const notification = await Notification.findOneAndUpdate(
-            { _id: id, studentId: req.user.id }, // Ensure student owns notification
-            { read: read },
+            { _id: id, studentId: req.user.id },             { read: read },
             { new: true }
         );
         if (!notification) {

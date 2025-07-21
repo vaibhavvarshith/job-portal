@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast'; // Import toast
-
-// --- Skeleton Loader Component ---
+import toast from 'react-hot-toast'; 
 const UserManagementSkeleton = () => (
     <>
         <style>{`
@@ -29,17 +27,14 @@ const ITEMS_PER_PAGE = 5;
 
 function UserManagementPage() {
     const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true); // New loading state
-    const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(true);     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('All');
     const [filterStatus, setFilterStatus] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalUsersCount, setTotalUsersCount] = useState(0); // For total count for pagination
-
+    const [totalUsersCount, setTotalUsersCount] = useState(0); 
     const navigate = useNavigate();
 
-    // Fetch users on component mount and when filters/page change
-    useEffect(() => {
+        useEffect(() => {
         const fetchUsers = async () => {
             const token = localStorage.getItem('authToken');
             if (!token) {
@@ -50,8 +45,7 @@ function UserManagementPage() {
 
             setLoading(true);
             try {
-                // Construct query parameters for search, filter, and pagination
-                const queryParams = new URLSearchParams({
+                                const queryParams = new URLSearchParams({
                     page: currentPage,
                     limit: ITEMS_PER_PAGE,
                     searchTerm: searchTerm,
@@ -59,8 +53,7 @@ function UserManagementPage() {
                     status: filterStatus === 'All' ? '' : filterStatus,
                 });
 
-                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users?${queryParams.toString()}`, { // New backend route
-                    headers: { 'Authorization': `Bearer ${token}` }
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users?${queryParams.toString()}`, {                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (!response.ok) {
@@ -68,8 +61,7 @@ function UserManagementPage() {
                 }
                 const data = await response.json();
                 setUsers(data.users);
-                setTotalUsersCount(data.totalCount); // Get total count for pagination
-
+                setTotalUsersCount(data.totalCount); 
             } catch (error) {
                 toast.error(error.message || "Could not fetch users.");
             } finally {
@@ -77,36 +69,30 @@ function UserManagementPage() {
             }
         };
         fetchUsers();
-    }, [currentPage, searchTerm, filterRole, filterStatus, navigate]); // Re-fetch when these dependencies change
-
+    }, [currentPage, searchTerm, filterRole, filterStatus, navigate]); 
 
     const totalPages = Math.ceil(totalUsersCount / ITEMS_PER_PAGE);
 
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
-        setCurrentPage(1); // Reset to first page on search
-    };
+        setCurrentPage(1);     };
 
     const handleRoleChange = (event) => {
         setFilterRole(event.target.value);
-        setCurrentPage(1); // Reset to first page on filter change
-    };
+        setCurrentPage(1);     };
 
     const handleStatusChange = (event) => {
         setFilterStatus(event.target.value);
-        setCurrentPage(1); // Reset to first page on filter change
-    };
+        setCurrentPage(1);     };
 
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
 
-    // Placeholder action handlers
-    const handleEditUser = (userId) => {
+        const handleEditUser = (userId) => {
         console.log(`Edit user: ${userId}`);
         toast.info("Edit user functionality is not yet implemented.");
-        // Add logic to open an edit modal or navigate to an edit page
-    };
+            };
 
     const handleDeleteUser = async (userId) => {
         if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
@@ -117,8 +103,7 @@ function UserManagementPage() {
         const loadingToast = toast.loading('Deleting user...');
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}`, { // New delete route
-                method: 'DELETE',
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}`, {                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` },
             });
 
@@ -130,8 +115,7 @@ function UserManagementPage() {
             }
             
             toast.success(result.message);
-            // Remove from local state
-            setUsers(prevUsers => prevUsers.filter(user => user._id !== userId));
+                        setUsers(prevUsers => prevUsers.filter(user => user._id !== userId));
             setTotalUsersCount(prevCount => prevCount - 1);
 
         } catch (error) {
@@ -151,8 +135,7 @@ function UserManagementPage() {
         const loadingToast = toast.loading('Updating user status...');
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}/status`, { // New status update route
-                method: 'PATCH',
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/users/${userId}/status`, {                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -168,8 +151,7 @@ function UserManagementPage() {
             }
             
             toast.success(result.message);
-            // Update local state
-            setUsers(prevUsers =>
+                        setUsers(prevUsers =>
                 prevUsers.map(user =>
                     user._id === userId ? { ...user, status: newStatus.trim() } : user
                 )
@@ -189,8 +171,7 @@ function UserManagementPage() {
 
     return (
         <div className="admin-dashboard-container">
-            {/* Sidebar */}
-            <div className="sidebar">
+                        <div className="sidebar">
                 <div className="sidebar-header">
                     <h1 className="sidebar-title">Pro <span className="trck">Track</span></h1>
                 </div>
@@ -198,8 +179,7 @@ function UserManagementPage() {
                     <Link to="/admin-dashboard" className="nav-link">
                         <i className="fas fa-tachometer-alt nav-icon"></i> Dashboard
                     </Link>
-                    <Link to="/admin-user-management" className="nav-link active-nav-link"> {/* Active link */}
-                        <i className="fas fa-users nav-icon"></i> User Management
+                    <Link to="/admin-user-management" className="nav-link active-nav-link">                         <i className="fas fa-users nav-icon"></i> User Management
                     </Link>
                     <Link to="/admin-recruiter-approvals" className="nav-link">
                         <i className="fas fa-check-circle nav-icon"></i> Recruiter Approvals
@@ -210,8 +190,7 @@ function UserManagementPage() {
                 </nav>
             </div>
 
-            {/* Main Content */}
-            <div className="main-content">
+                        <div className="main-content">
                 <header className="main-header">
                     <div className="header-content">
                         <h1 className="header-title">User Management</h1>
@@ -234,8 +213,7 @@ function UserManagementPage() {
                 <main className="content-area">
                     {loading ? <UserManagementSkeleton /> : (
                         <div className="user-management-content">
-                            {/* Toolbar: Search, Filters, Add User Button */}
-                            <div className="toolbar">
+                                                        <div className="toolbar">
                                 <div className="search-container">
                                     <i className="fas fa-search search-icon"></i>
                                     <input
@@ -266,8 +244,7 @@ function UserManagementPage() {
                                 </button>
                             </div>
 
-                            {/* Users Table */}
-                            <div className="table-container">
+                                                        <div className="table-container">
                                 <table className="users-table">
                                     <thead>
                                         <tr>
@@ -314,8 +291,7 @@ function UserManagementPage() {
                                 </table>
                             </div>
 
-                            {/* Pagination */}
-                            {totalPages > 1 && (
+                                                        {totalPages > 1 && (
                                 <div className="pagination-container">
                                     <button
                                         onClick={() => handlePageChange(currentPage - 1)}

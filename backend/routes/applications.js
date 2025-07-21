@@ -40,18 +40,14 @@ router.patch('/:id/status', auth, async (req, res) => {
             return res.status(404).json({ message: 'Application not found.' });
         }
 
-        // Logic for Recruiter
-        if (req.user.role === 'recruiter') {
-            // Ensure the recruiter owns this application (posted the job/internship)
-            if (application.recruiterId.toString() !== req.user.id) {
+                if (req.user.role === 'recruiter') {
+                        if (application.recruiterId.toString() !== req.user.id) {
                 return res.status(403).json({ message: 'Access denied. You do not have permission to update this application.' });
             }
             application.status = status;
         } 
-        // Logic for Student
-        else if (req.user.role === 'student') {
-            // Students can only change their OWN application status to 'Withdrawn'
-            if (application.studentId.toString() !== req.user.id) {
+                else if (req.user.role === 'student') {
+                        if (application.studentId.toString() !== req.user.id) {
                 return res.status(403).json({ message: 'Access denied. You can only withdraw your own applications.' });
             }
             if (status !== 'Withdrawn') {
@@ -59,8 +55,7 @@ router.patch('/:id/status', auth, async (req, res) => {
             }
             application.status = status;
         } 
-        // Neither recruiter nor student (or other roles not allowed)
-        else {
+                else {
             return res.status(403).json({ message: 'Access denied. Unauthorized role.' });
         }
 

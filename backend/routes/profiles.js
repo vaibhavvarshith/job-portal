@@ -43,8 +43,7 @@ router.post('/recruiter', auth, async (req, res) => {
             { new: true, upsert: true, setDefaultsOnInsert: true }
         );
 
-        // Update User model to link CompanyProfile ID
-        await User.findByIdAndUpdate(
+                await User.findByIdAndUpdate(
             req.user.id,
             { companyProfile: profile._id },
             { new: true }

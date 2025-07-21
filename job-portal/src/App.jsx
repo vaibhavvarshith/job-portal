@@ -1,9 +1,6 @@
-// App.js
 import React from 'react';
 import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast'; // Toaster ko import karein
-
-// ... (baaki saare component imports waise hi rahenge)
+import { Toaster } from 'react-hot-toast'; 
 import LandingPage from './Pages/LandingPage';
 import AuthModule from './Pages/Login-Register';
 import ForgotPasswordPage from './Components/ForgotPassword.jsx';
@@ -23,7 +20,6 @@ import PostInternshipStandalonePage from './Pages/RecruiterPages/RecruiterPostIn
 import ApplicationsApprovalStandalonePage from './Pages/RecruiterPages/RecruiterApplications';
 import CompanyProfileStandalonePage from './Pages/RecruiterPages/RecruiterCompanyProfile';
 
-// Placeholder for JobListingPage - You will need to create this component
 const JobListingPage = () => (
   <div style={{ padding: '2rem', textAlign: 'center', fontSize: '1.5rem', color: '#333' }}>
     <h2>Job Listings Page Coming Soon!</h2>
@@ -36,18 +32,16 @@ const JobListingPage = () => (
 const RootLayout = () => {
   return (
     <>
-      {/* Toaster component ko yahan add karein taaki ye poori app me kaam kare */}
+      
       <Toaster
         position="top-right"
         toastOptions={{
-          // Define default options
-          duration: 5000,
+                    duration: 5000,
           style: {
             background: '#363636',
             color: '#fff',
           },
-          // Default options for specific types
-          success: {
+                    success: {
             duration: 3000,
             theme: {
               primary: 'green',
@@ -66,8 +60,7 @@ const router = createBrowserRouter([
     path: "/",
     element: <RootLayout />,
     children: [
-      // ... (aapke saare routes waise hi rahenge)
-      {
+            {
         index: true,
         path: "/",
         element: <LandingPage />,
@@ -117,11 +110,9 @@ const router = createBrowserRouter([
         path: "/student-applications",
         element: <ApplicationsStandalonePage />
       },
-      // --- NEW ROUTE FOR JOB LISTINGS ---
-      {
+            {
         path: "/student/job-listings",
-        element: <JobListingPage /> // Placeholder component
-      },
+        element: <JobListingPage />       },
       {
         path: "/student-notifications",
         element: <NotificationsStandalonePage />

@@ -90,7 +90,7 @@ function LandingPage() {
 
     return (
         <div>
-            {/* Navigation Bar */}
+            
             <nav className="navbar">
                 <div className="logo">PRO <span>TRACK</span></div>
                 <ul className="nav-links">
@@ -103,7 +103,7 @@ function LandingPage() {
                 <Link to="/login" className="btn">Login</Link>
             </nav>
 
-            {/* Hero Section - Typically not animated on scroll as it's often above the fold */}
+            
             <section className="hero" id="hero">
                 <div className="hero-content">
                     <h1>INTERNSHIP & JOB MANAGEMENT WEB PORTAL</h1>
@@ -117,7 +117,7 @@ function LandingPage() {
                 </div>
             </section>
 
-            {/* Features Section */}
+            
             <section id="features" className="section features">
                 <div className="section-title animate-on-scroll">
                     <h2>Project Objectives</h2>
@@ -125,7 +125,7 @@ function LandingPage() {
                         accessible and management more efficient.</p>
                 </div>
                 <div className="feature-cards">
-                    {/* Add .animate-on-scroll to each card or their container */}
+                    
                     <div className="feature-card animate-on-scroll">
                         <div className="feature-icon">👩‍💻</div>
                         <h3>Student Dashboard</h3>
@@ -162,7 +162,7 @@ function LandingPage() {
                 </div>
             </section>
 
-            {/* Tech Stack Section */}
+            
             <section id="tech-stack" className="section tech-stack">
                 <div className="section-title animate-on-scroll">
                     <h2>Tech Stack & Tools</h2>
@@ -204,7 +204,7 @@ function LandingPage() {
                 </div>
             </section>
 
-            {/* Modules Section */}
+            
             <section id="modules" className="section modules">
                 <div className="section-title animate-on-scroll">
                     <h2>Key Modules</h2>
@@ -268,7 +268,7 @@ function LandingPage() {
                 </div>
             </section>
 
-            {/* Internship Tracks Section */}
+            
             <section id="tracks" className="section internship-tracks">
                 <div className="section-title animate-on-scroll">
                     <h2>Internship Duration Tracks</h2>
@@ -311,9 +311,9 @@ function LandingPage() {
                 </div>
             </section>
 
-            {/* Call to Action */}
+            
             <section className="section cta">
-                {/* CTA background is gradient, so animating the inner content is better */}
+                
                 <div className="cta-content animate-on-scroll">
                     <h2>Ready to Get Started?</h2>
                     <p>Join ProTrack Connect to boost your career or find the perfect candidate for your organization.</p>
@@ -321,7 +321,7 @@ function LandingPage() {
                 </div>
             </section>
 
-            {/* Footer */}
+            
             <footer id="contact" className="footer">
                 <div className="footer-content">
                     <div className="footer-column animate-on-scroll">
