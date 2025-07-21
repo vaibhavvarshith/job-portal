@@ -1,94 +1,187 @@
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom'; // Assuming you use react-router-dom
-// import './AdminDashboard.css'; // Re-use common layout styles
-// import './RecruiterApprovalsPage.css'; // Styles specific to this page
+import React, { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast'; // Import toast
 
-// Mock Recruiter Data for Approvals
-const initialApprovalRequests = [
-    { id: 1, name: 'Tech Solutions Inc.', contactPerson: 'John Doe', email: 'john.doe@techsolutions.com', industry: 'Information Technology', appliedDate: '2023-07-10', status: 'Pending' },
-    { id: 2, name: 'Innovate Hub Ltd.', contactPerson: 'Jane Smith', email: 'jane.smith@innovatehub.com', industry: 'Marketing & Advertising', appliedDate: '2023-07-12', status: 'Pending' },
-    { id: 3, name: 'GreenEnergy Corp.', contactPerson: 'Robert Brown', email: 'robert.brown@greenenergy.com', industry: 'Renewable Energy', appliedDate: '2023-07-11', status: 'Pending' },
-    { id: 4, name: 'HealthFirst Clinics', contactPerson: 'Emily White', email: 'emily.white@healthfirst.com', industry: 'Healthcare', appliedDate: '2023-07-14', status: 'Pending' },
-    { id: 5, name: 'BuildRight Constructions', contactPerson: 'Michael Green', email: 'michael.green@buildright.com', industry: 'Construction', appliedDate: '2023-07-13', status: 'Pending' },
-    { id: 6, name: 'EduGrowth Partners', contactPerson: 'Sarah Davis', email: 'sarah.davis@edugrowth.com', industry: 'Education', appliedDate: '2023-07-15', status: 'Pending' },
-];
+// --- Skeleton Loader Component ---
+const RecruiterApprovalsSkeleton = () => (
+    <>
+        <style>{`
+            .skeleton-box { background-color: #e0e0e0; border-radius: 8px; animation: skeleton-pulse 1.5s infinite ease-in-out; }
+            .skeleton-line { width: 100%; height: 20px; margin-bottom: 10px; border-radius: 4px; }
+            .skeleton-line.short { width: 60%; }
+            @keyframes skeleton-pulse { 0% { background-color: #e0e0e0; } 50% { background-color: #f0f0f0; } 100% { background-color: #e0e0e0; } }
+        `}</style>
+        <div className="recruiter-approvals-content">
+            <div className="toolbar skeleton-box" style={{ height: '60px' }}></div>
+            <div className="table-container skeleton-box" style={{ padding: '20px', marginTop: '1rem' }}>
+                <div className="skeleton-line"></div>
+                <div className="skeleton-line short"></div>
+                <div className="skeleton-line"></div>
+                <div className="skeleton-line short"></div>
+                <div className="skeleton-line"></div>
+            </div>
+        </div>
+    </>
+);
+
 
 const ITEMS_PER_PAGE = 5;
 
 function RecruiterApprovalsPage() {
-    const [requests, setRequests] = useState(initialApprovalRequests);
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(true); // New loading state
     const [searchTerm, setSearchTerm] = useState('');
     const [filterIndustry, setFilterIndustry] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalRequestsCount, setTotalRequestsCount] = useState(0); // For total count for pagination
 
-    const uniqueIndustries = useMemo(() => {
-        const industries = new Set(initialApprovalRequests.map(req => req.industry));
-        return ['All', ...Array.from(industries)];
+    const navigate = useNavigate();
+
+    // Fetch approval requests on component mount and when filters/page change
+    useEffect(() => {
+        const fetchApprovalRequests = async () => {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                toast.error("Please log in to view recruiter approvals.");
+                navigate('/login');
+                return;
+            }
+
+            setLoading(true);
+            try {
+                // Construct query parameters for search, filter, and pagination
+                const queryParams = new URLSearchParams({
+                    page: currentPage,
+                    limit: ITEMS_PER_PAGE,
+                    searchTerm: searchTerm,
+                    industry: filterIndustry === 'All' ? '' : filterIndustry,
+                });
+
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/recruiter-approvals?${queryParams.toString()}`, { // New backend route
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch recruiter approval requests.');
+                }
+                const data = await response.json();
+                setRequests(data.requests);
+                setTotalRequestsCount(data.totalCount); // Get total count for pagination
+
+            } catch (error) {
+                toast.error(error.message || "Could not fetch recruiter approvals.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchApprovalRequests();
+    }, [currentPage, searchTerm, filterIndustry, navigate]); // Re-fetch when these dependencies change
+
+    // Fetch unique industries for filter dropdown (can be a separate API call or derived from all requests)
+    const [uniqueIndustries, setUniqueIndustries] = useState(['All']);
+    useEffect(() => {
+        const fetchUniqueIndustries = async () => {
+            const token = localStorage.getItem('authToken');
+            if (!token) return;
+            try {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/industries`, { // Assuming a route to get unique industries
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setUniqueIndustries(['All', ...data.industries]);
+                }
+            } catch (error) {
+                console.error("Failed to fetch unique industries:", error);
+            }
+        };
+        fetchUniqueIndustries();
     }, []);
 
 
-    const filteredRequests = useMemo(() => {
-        return requests.filter(req => {
-            const companyMatch = req.name.toLowerCase().includes(searchTerm.toLowerCase());
-            const contactMatch = req.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
-            const emailMatch = req.email.toLowerCase().includes(searchTerm.toLowerCase());
-            const industryMatch = filterIndustry === 'All' || req.industry === filterIndustry;
-            return (companyMatch || contactMatch || emailMatch) && industryMatch && req.status === 'Pending'; // Only show pending
-        });
-    }, [requests, searchTerm, filterIndustry]);
-
-    const paginatedRequests = useMemo(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        return filteredRequests.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-    }, [filteredRequests, currentPage]);
-
-    const totalPages = Math.ceil(filteredRequests.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(totalRequestsCount / ITEMS_PER_PAGE);
 
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
-        setCurrentPage(1);
+        setCurrentPage(1); // Reset to first page on search
     };
 
     const handleIndustryChange = (event) => {
         setFilterIndustry(event.target.value);
-        setCurrentPage(1);
+        setCurrentPage(1); // Reset to first page on filter change
     };
 
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
 
-    const handleApprove = (requestId) => {
-        console.log(`Approve recruiter: ${requestId}`);
-        // API call to approve recruiter
-        // Update local state to reflect approval (e.g., remove from pending or change status)
-        setRequests(prevRequests => prevRequests.filter(req => req.id !== requestId));
-        // Or update status:
-        // setRequests(prevRequests =>
-        //   prevRequests.map(req =>
-        //     req.id === requestId ? { ...req, status: 'Approved' } : req
-        //   )
-        // );
-    };
+    const handleApprove = async (requestId, recruiterUserId) => {
+        const token = localStorage.getItem('authToken');
+        const loadingToast = toast.loading('Approving recruiter...');
 
-    const handleReject = (requestId) => {
-        console.log(`Reject recruiter: ${requestId}`);
-        if (window.confirm('Are you sure you want to reject this recruiter application?')) {
-            // API call to reject recruiter
-            setRequests(prevRequests => prevRequests.filter(req => req.id !== requestId));
-            // Or update status:
-            // setRequests(prevRequests =>
-            //   prevRequests.map(req =>
-            //     req.id === requestId ? { ...req, status: 'Rejected' } : req
-            //   )
-            // );
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/recruiter-approvals/${requestId}/approve`, { // New approve route
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+
+            const result = await response.json();
+            toast.dismiss(loadingToast);
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to approve recruiter.');
+            }
+            
+            toast.success(result.message);
+            // Remove from local state
+            setRequests(prevRequests => prevRequests.filter(req => req._id !== requestId));
+            setTotalRequestsCount(prevCount => prevCount - 1);
+
+            // Optionally, if you have a UserManagement page, you might want to refresh its data
+            // Or, if the recruiter is now active, you might redirect to UserManagement.
+
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error(error.message || "Error approving recruiter.");
         }
     };
+
+    const handleReject = async (requestId) => {
+        if (!window.confirm('Are you sure you want to reject this recruiter application? This action cannot be undone.')) {
+            return;
+        }
+
+        const token = localStorage.getItem('authToken');
+        const loadingToast = toast.loading('Rejecting recruiter...');
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/recruiter-approvals/${requestId}/reject`, { // New reject route
+                method: 'PATCH', // Or DELETE if you want to remove the user entirely
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+
+            const result = await response.json();
+            toast.dismiss(loadingToast);
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to reject recruiter.');
+            }
+            
+            toast.success(result.message);
+            // Remove from local state
+            setRequests(prevRequests => prevRequests.filter(req => req._id !== requestId));
+            setTotalRequestsCount(prevCount => prevCount - 1);
+
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error(error.message || "Error rejecting recruiter.");
+        }
+    };
+
     const handleLogout = () => {
-        // Implement your logout logic here
-        // e.g., clear tokens, call a logout API, redirect
-        console.log('Admin logged out');
-        navigate('/login'); // Example: Redirect to login page
+        localStorage.removeItem('authToken');
+        toast.success('Logged out successfully!');
+        navigate('/login');
     };
 
     return (
@@ -109,7 +202,7 @@ function RecruiterApprovalsPage() {
                         <i className="fas fa-check-circle nav-icon"></i> Recruiter Approvals
                     </Link>
                     <Link to="/admin-analytics-reports" className="nav-link">
-                        <i className="fas fa-chart-bar nav-icon"></i> Analytics
+                        <i className="fas fa-chart-bar nav-icon"></i> Analytics & Reports
                     </Link>
                 </nav>
             </div>
@@ -120,7 +213,7 @@ function RecruiterApprovalsPage() {
                     <div className="header-content">
                         <h1 className="header-title">Recruiter Approvals</h1>
                         <div className="header-actions">
-                            <button className="notification-button">
+                            <button className="notification-button" title="Notifications">
                                 <i className="fas fa-bell"></i>
                             </button>
                             <div className="user-profile">
@@ -136,102 +229,100 @@ function RecruiterApprovalsPage() {
                 </header>
 
                 <main className="content-area">
-                    <div className="recruiter-approvals-content">
-                        {/* Toolbar: Search, Filters */}
-                        <div className="toolbar">
-                            <div className="search-container">
-                                <i className="fas fa-search search-icon"></i>
-                                <input
-                                    type="text"
-                                    placeholder="Search by company, contact, or email..."
-                                    className="search-input"
-                                    value={searchTerm}
-                                    onChange={handleSearchChange}
-                                />
+                    {loading ? <RecruiterApprovalsSkeleton /> : (
+                        <div className="recruiter-approvals-content">
+                            {/* Toolbar: Search, Filters */}
+                            <div className="toolbar">
+                                <div className="search-container">
+                                    <i className="fas fa-search search-icon"></i>
+                                    <input
+                                        type="text"
+                                        placeholder="Search by company, contact, or email..."
+                                        className="search-input"
+                                        value={searchTerm}
+                                        onChange={handleSearchChange}
+                                    />
+                                </div>
+                                <div className="filters-container">
+                                    <select value={filterIndustry} onChange={handleIndustryChange} className="filter-select">
+                                        {uniqueIndustries.map(industry => (
+                                            <option key={industry} value={industry}>{industry === 'All' ? 'All Industries' : industry}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
-                            <div className="filters-container">
-                                <select value={filterIndustry} onChange={handleIndustryChange} className="filter-select">
-                                    {uniqueIndustries.map(industry => (
-                                        <option key={industry} value={industry}>{industry === 'All' ? 'All Industries' : industry}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
 
-                        {/* Approvals Table/List */}
-                        <div className="table-container">
-                            <table className="approvals-table">
-                                <thead>
-                                    <tr>
-                                        <th>Company Name</th>
-                                        <th>Contact Person</th>
-                                        <th>Email</th>
-                                        <th>Industry</th>
-                                        <th>Date Applied</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {paginatedRequests.length > 0 ? (
-                                        paginatedRequests.map(req => (
-                                            <tr key={req.id}>
-                                                <td>{req.name}</td>
-                                                <td>{req.contactPerson}</td>
-                                                <td>{req.email}</td>
-                                                <td>{req.industry}</td>
-                                                <td>{req.appliedDate}</td>
-                                                <td className="actions-cell">
-                                                    <button onClick={() => handleApprove(req.id)} className="action-button approve-button" title="Approve">
-                                                        <i className="fas fa-check"></i> Approve
-                                                    </button>
-                                                    <button onClick={() => handleReject(req.id)} className="action-button reject-button" title="Reject">
-                                                        <i className="fas fa-times"></i> Reject
-                                                    </button>
-                                                    {/* Optionally, a view details button */}
-                                                    {/* <button className="action-button view-button" title="View Details">
-                            <i className="fas fa-eye"></i>
-                          </button> */}
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
+                            {/* Approvals Table/List */}
+                            <div className="table-container">
+                                <table className="approvals-table">
+                                    <thead>
                                         <tr>
-                                            <td colSpan="6" className="no-requests-found">No pending recruiter approvals.</td>
+                                            <th>Company Name</th>
+                                            <th>Contact Person</th>
+                                            <th>Email</th>
+                                            <th>Industry</th>
+                                            <th>Date Applied</th>
+                                            <th>Actions</th>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="pagination-container">
-                                <button
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                    className="pagination-button"
-                                >
-                                    <i className="fas fa-chevron-left"></i> Previous
-                                </button>
-                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-                                    <button
-                                        key={pageNumber}
-                                        onClick={() => handlePageChange(pageNumber)}
-                                        className={`pagination-button ${currentPage === pageNumber ? 'active' : ''}`}
-                                    >
-                                        {pageNumber}
-                                    </button>
-                                ))}
-                                <button
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage === totalPages}
-                                    className="pagination-button"
-                                >
-                                    Next <i className="fas fa-chevron-right"></i>
-                                </button>
+                                    </thead>
+                                    <tbody>
+                                        {requests.length > 0 ? (
+                                            requests.map(req => (
+                                                <tr key={req._id}>
+                                                    <td>{req.companyName}</td> {/* Assuming companyName is direct or populated */}
+                                                    <td>{req.contactPerson || req.user?.name || 'N/A'}</td> {/* Assuming contactPerson or user.name */}
+                                                    <td>{req.user?.email || 'N/A'}</td> {/* Assuming user.email is populated */}
+                                                    <td>{req.industry || 'N/A'}</td> {/* Assuming industry is direct or populated */}
+                                                    <td>{new Date(req.createdAt).toLocaleDateString()}</td>
+                                                    <td className="actions-cell">
+                                                        <button onClick={() => handleApprove(req._id, req.user._id)} className="action-button approve-button" title="Approve">
+                                                            <i className="fas fa-check"></i> Approve
+                                                        </button>
+                                                        <button onClick={() => handleReject(req._id)} className="action-button reject-button" title="Reject">
+                                                            <i className="fas fa-times"></i> Reject
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan="6" className="no-requests-found">No pending recruiter approvals.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
-                        )}
-                    </div>
+
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <div className="pagination-container">
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className="pagination-button"
+                                    >
+                                        <i className="fas fa-chevron-left"></i> Previous
+                                    </button>
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+                                        <button
+                                            key={pageNumber}
+                                            onClick={() => handlePageChange(pageNumber)}
+                                            className={`pagination-button ${currentPage === pageNumber ? 'active' : ''}`}
+                                        >
+                                            {pageNumber}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        className="pagination-button"
+                                    >
+                                        Next <i className="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </main>
             </div>
         </div>

@@ -1,49 +1,119 @@
-import React, { useState, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
-const handleLogout = () => {
-    // Implement your logout logic here
-    // e.g., clear tokens, call a logout API, redirect
-    console.log('Admin logged out');
-    navigate('/login'); // Example: Redirect to login page
-};
+// --- Skeleton Loader Component for Student Applications ---
+const StudentApplicationsSkeleton = () => (
+    <>
+        <style>{`
+            .skeleton-box { background-color: #e0e0e0; border-radius: 8px; animation: skeleton-pulse 1.5s infinite ease-in-out; }
+            .skeleton-line { width: 100%; height: 20px; margin-bottom: 10px; border-radius: 4px; }
+            .skeleton-line.short { width: 60%; }
+            @keyframes skeleton-pulse { 0% { background-color: #e0e0e0; } 50% { background-color: #f0f0f0; } 100% { background-color: #e0e0e0; } }
+        `}</style>
+        <div className="applications-container">
+            <div className="applications-toolbar">
+                <div className="skeleton-box" style={{ height: '40px', flexGrow: 1, marginRight: '1rem' }}></div>
+                <div className="skeleton-box" style={{ height: '40px', width: '150px' }}></div>
+            </div>
+            <div className="applications-table-container skeleton-box" style={{ padding: '20px', marginTop: '1rem' }}>
+                <div className="skeleton-line"></div>
+                <div className="skeleton-line short"></div>
+                <div className="skeleton-line"></div>
+                <div className="skeleton-line short"></div>
+                <div className="skeleton-line"></div>
+            </div>
+        </div>
+    </>
+);
+
 // Navigation items for the sidebar
 const navItems = [
     { path: '/student-dashboard', icon: 'fas fa-tachometer-alt', label: 'Dashboard' },
     { path: '/student-profile', icon: 'fas fa-user-circle', label: 'My Profile' },
     { path: '/student-resume', icon: 'fas fa-file-alt', label: 'Resume Manager' },
-    { path: '/student-applications', icon: 'fas fa-inbox', label: 'Applications', badge: 3 },
-    { path: '/student-notifications', icon: 'fas fa-bell', label: 'Notifications', badge: 5 },
-];
-
-// Mock Application Data
-const initialApplications = [
-    { id: 1, jobId: 101, jobTitle: 'Software Engineer Intern', company: 'Tech Solutions Inc.', dateApplied: '2023-07-01', status: 'Under Review', lastUpdate: '2023-07-05' },
-    { id: 2, jobId: 102, jobTitle: 'Frontend Developer (Junior)', company: 'Innovate Hub Ltd.', dateApplied: '2023-06-25', status: 'Interview Scheduled', interviewDate: '2023-07-15', interviewTime: '10:00 AM PST', lastUpdate: '2023-07-02' },
-    { id: 3, jobId: 103, jobTitle: 'Data Analyst Intern', company: 'GreenEnergy Corp.', dateApplied: '2023-06-10', status: 'Offer Extended', offerDeadline: '2023-07-20', lastUpdate: '2023-07-08' },
-    { id: 4, jobId: 104, jobTitle: 'Product Manager', company: 'HealthFirst Clinics', dateApplied: '2023-05-15', status: 'Rejected', lastUpdate: '2023-06-01' },
-    { id: 5, jobId: 105, jobTitle: 'UX/UI Design Intern', company: 'Creative Spark Agency', dateApplied: '2023-07-05', status: 'Applied', lastUpdate: '2023-07-05' },
-    { id: 6, jobId: 106, jobTitle: 'Backend Developer', company: 'SecureNet Systems', dateApplied: '2023-06-20', status: 'Interview Scheduled', interviewDate: '2023-07-18', interviewTime: '02:00 PM EST', lastUpdate: '2023-07-10' },
+    { path: '/student-applications', icon: 'fas fa-inbox', label: 'Applications' }, // Badge will be dynamic
+    { path: '/student-notifications', icon: 'fas fa-bell', label: 'Notifications' }, // Badge will be dynamic
 ];
 
 const ITEMS_PER_PAGE = 5;
 
 function ApplicationsStandalonePage() {
-    const location = useLocation(); // To determine the active link
+    const location = useLocation();
+    const navigate = useNavigate();
 
-    const [applications, setApplications] = useState(initialApplications);
-    const [filterStatus, setFilterStatus] = useState('All'); // All, Applied, Under Review, Interview Scheduled, Offer Extended, Rejected
+    const [applications, setApplications] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
+    const [studentData, setStudentData] = useState(null); // State for student name/avatar in header
 
-    const uniqueStatuses = useMemo(() => ['All', ...new Set(initialApplications.map(app => app.status))], []);
+    // Fetch applications and student profile data
+    useEffect(() => {
+        const fetchApplicationsAndProfile = async () => {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                toast.error("Please log in to view your applications.");
+                navigate('/login');
+                return;
+            }
 
+            try {
+                // Fetch applications
+                const applicationsRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/applications`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                // Fetch student profile for header
+                const profileRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/profile/student`, { // Assuming a student profile route
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!applicationsRes.ok) {
+                    throw new Error('Failed to fetch applications.');
+                }
+                const applicationsData = await applicationsRes.json();
+                setApplications(applicationsData);
+
+                if (profileRes.ok) {
+                    const profileData = await profileRes.json();
+                    setStudentData(profileData);
+                } else if (profileRes.status === 404) {
+                    // Profile not found, use default or prompt to create
+                    console.warn("Student profile not found, using default.");
+                    setStudentData({ fullName: 'Student User', profilePicture: 'https://placehold.co/120x120/15803D/FFFFFF?text=SU' });
+                } else {
+                    throw new Error('Failed to fetch student profile.');
+                }
+
+            } catch (error) {
+                toast.error(error.message || "Could not fetch data.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchApplicationsAndProfile();
+    }, [navigate]);
+
+    // Derive unique statuses from fetched applications for filter dropdown
+    const uniqueStatuses = useMemo(() => {
+        const statuses = new Set(applications.map(app => app.status));
+        return ['All', ...Array.from(statuses)];
+    }, [applications]);
+
+    // Filter and paginate applications
     const filteredApplications = useMemo(() => {
         return applications.filter(app => {
             const searchLower = searchTerm.toLowerCase();
-            const titleMatch = app.jobTitle.toLowerCase().includes(searchLower);
-            const companyMatch = app.company.toLowerCase().includes(searchLower);
+            const jobTitle = app.jobId?.jobTitle || '';
+            const companyName = app.recruiterId?.companyName || ''; // Assuming companyName is populated
+            
+            const titleMatch = jobTitle.toLowerCase().includes(searchLower);
+            const companyMatch = companyName.toLowerCase().includes(searchLower);
             const statusMatch = filterStatus === 'All' || app.status === filterStatus;
+            
             return (titleMatch || companyMatch) && statusMatch;
         });
     }, [applications, searchTerm, filterStatus]);
@@ -58,16 +128,54 @@ function ApplicationsStandalonePage() {
     const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
     const getStatusClass = (status) => {
+        if (!status) return '';
         return status.toLowerCase().replace(/\s+/g, '-');
     };
 
-    const handleWithdrawApplication = (appId) => {
-        if (window.confirm("Are you sure you want to withdraw this application? This action cannot be undone.")) {
-            // TODO: API call to withdraw application
-            setApplications(prevApps => prevApps.filter(app => app.id !== appId));
-            console.log(`Withdrew application ID: ${appId}`);
-            alert(`Application ID ${appId} withdrawn. (Placeholder)`);
+    const handleWithdrawApplication = async (appId) => {
+        if (!window.confirm("Are you sure you want to withdraw this application? This action cannot be undone.")) {
+            return; // User cancelled
         }
+
+        const token = localStorage.getItem('authToken');
+        const loadingToast = toast.loading('Withdrawing application...');
+
+        try {
+            // Assuming the PATCH /api/applications/:id/status route allows students to withdraw their own applications
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/applications/${appId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: 'Withdrawn' })
+            });
+            
+            const result = await response.json();
+            toast.dismiss(loadingToast);
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to withdraw application.');
+            }
+            
+            toast.success('Application withdrawn successfully!');
+            // Update local state to reflect the change
+            setApplications(prevApps =>
+                prevApps.map(app =>
+                    app._id === appId ? { ...app, status: 'Withdrawn' } : app
+                )
+            );
+
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error(error.message || "An error occurred while withdrawing application.");
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('authToken');
+        toast.success("Logged out successfully!");
+        navigate('/login');
     };
 
     return (
@@ -86,7 +194,8 @@ function ApplicationsStandalonePage() {
                         >
                             <i className={`${item.icon} student-page-nav-icon`}></i>
                             {item.label}
-                            {item.badge && <span className="student-page-nav-badge">{item.badge}</span>}
+                            {/* Dynamically show badge if needed, e.g., for unread notifications */}
+                            {/* {item.badge && <span className="student-page-nav-badge">{item.badge}</span>} */}
                         </Link>
                     ))}
                 </nav>
@@ -96,14 +205,20 @@ function ApplicationsStandalonePage() {
             <div className="student-page-main-content">
                 <header className="student-page-main-header">
                     <div className="student-page-header-content">
-                        <h1 className="student-page-header-title">My Applications</h1> {/* Page Specific Title */}
+                        <h1 className="student-page-header-title">My Applications</h1>
                         <div className="student-page-header-actions">
                             <button className="student-page-notification-button" title="Notifications">
                                 <i className="fas fa-bell"></i>
                             </button>
                             <div className="student-page-user-profile">
-                                <span className="student-page-user-name">Jane S.</span>
-                                <div className="student-page-user-avatar">JS</div>
+                                <span className="student-page-user-name">{studentData?.fullName?.split(' ')[0] || 'Student'}</span>
+                                <div className="student-page-user-avatar">
+                                    {studentData?.profilePicture && !studentData.profilePicture.includes('placehold.co') ? (
+                                        <img src={studentData.profilePicture} alt="Profile" className="header-profile-img" />
+                                    ) : (
+                                        studentData?.fullName ? studentData.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'SU'
+                                    )}
+                                </div>
                             </div>
                             <button onClick={handleLogout} className="logout-button" title="Logout">
                                 <i className="fas fa-sign-out-alt"></i>
@@ -114,108 +229,112 @@ function ApplicationsStandalonePage() {
                 </header>
 
                 <main className="student-page-content-area">
-                    {/* Applications Specific Content */}
-                    <div className="applications-container">
-                        <div className="applications-toolbar">
-                            <input
-                                type="text"
-                                placeholder="Search by job title or company..."
-                                value={searchTerm}
-                                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                                className="applications-search-input"
-                            />
-                            <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }} className="applications-filter-select">
-                                {uniqueStatuses.map(status => (
-                                    <option key={status} value={status}>{status}</option>
-                                ))}
-                            </select>
-                        </div>
+                    {loading ? <StudentApplicationsSkeleton /> : (
+                        <div className="applications-container">
+                            <div className="applications-toolbar">
+                                <input
+                                    type="text"
+                                    placeholder="Search by job title or company..."
+                                    value={searchTerm}
+                                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                    className="applications-search-input"
+                                />
+                                <select value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }} className="applications-filter-select">
+                                    {uniqueStatuses.map(status => (
+                                        <option key={status} value={status}>{status}</option>
+                                    ))}
+                                </select>
+                            </div>
 
-                        {paginatedApplications.length > 0 ? (
-                            <div className="applications-table-container">
-                                <table className="applications-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Job Title</th>
-                                            <th>Company</th>
-                                            <th>Date Applied</th>
-                                            <th>Status</th>
-                                            <th>Last Update</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {paginatedApplications.map(app => (
-                                            <tr key={app.id}>
-                                                <td>
-                                                    {/* Assuming a job details page might exist at /student/job-details/:jobId */}
-                                                    <Link to={`/student/job-details/${app.jobId}`} className="job-title-link">{app.jobTitle}</Link>
-                                                </td>
-                                                <td>{app.company}</td>
-                                                <td>{app.dateApplied}</td>
-                                                <td>
-                                                    <span className={`application-status-badge status-${getStatusClass(app.status)}`}>
-                                                        {app.status}
-                                                    </span>
-                                                    {app.status === 'Interview Scheduled' && app.interviewDate && (
-                                                        <span className="interview-details">
-                                                            <i className="fas fa-calendar-alt"></i> {app.interviewDate} at {app.interviewTime}
-                                                        </span>
-                                                    )}
-                                                    {app.status === 'Offer Extended' && app.offerDeadline && (
-                                                        <span className="offer-details">
-                                                            <i className="fas fa-hourglass-half"></i> Deadline: {app.offerDeadline}
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td>{app.lastUpdate}</td>
-                                                <td className="application-actions-cell">
-                                                    <button className="action-btn-app view-details-btn" title="View Details">
-                                                        <i className="fas fa-eye"></i>
-                                                    </button>
-                                                    {(app.status === 'Applied' || app.status === 'Under Review') && (
-                                                        <button
-                                                            onClick={() => handleWithdrawApplication(app.id)}
-                                                            className="action-btn-app withdraw-btn"
-                                                            title="Withdraw Application"
-                                                        >
-                                                            <i className="fas fa-times-circle"></i>
-                                                        </button>
-                                                    )}
-                                                </td>
+                            {paginatedApplications.length > 0 ? (
+                                <div className="applications-table-container">
+                                    <table className="applications-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Job Title</th>
+                                                <th>Company</th>
+                                                <th>Date Applied</th>
+                                                <th>Status</th>
+                                                <th>Last Update</th>
+                                                <th>Actions</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="no-applications-found">
-                                <i className="fas fa-folder-open empty-icon"></i>
-                                <p>You haven't applied to any jobs yet, or no applications match your filters.</p>
-                                <Link to="/student/job-listings" className="find-jobs-link">Find Jobs</Link>
-                            </div>
-                        )}
+                                        </thead>
+                                        <tbody>
+                                            {paginatedApplications.map(app => (
+                                                <tr key={app._id}>
+                                                    <td>
+                                                        {/* Link to job details page if available */}
+                                                        <Link to={`/student/job-details/${app.jobId?._id}`} className="job-title-link">
+                                                            {app.jobId?.jobTitle || 'N/A'}
+                                                        </Link>
+                                                    </td>
+                                                    <td>{app.recruiterId?.companyName || 'N/A'}</td> {/* Assuming recruiterId is populated with companyName */}
+                                                    <td>{new Date(app.createdAt).toLocaleDateString()}</td>
+                                                    <td>
+                                                        <span className={`application-status-badge status-${getStatusClass(app.status)}`}>
+                                                            {app.status}
+                                                        </span>
+                                                        {/* You might need to fetch interviewDate/offerDeadline if stored in Application model */}
+                                                        {app.status === 'Interview Scheduled' && app.interviewDate && (
+                                                            <span className="interview-details">
+                                                                <i className="fas fa-calendar-alt"></i> {app.interviewDate} at {app.interviewTime}
+                                                            </span>
+                                                        )}
+                                                        {app.status === 'Offer Extended' && app.offerDeadline && (
+                                                            <span className="offer-details">
+                                                                <i className="fas fa-hourglass-half"></i> Deadline: {app.offerDeadline}
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                    <td>{new Date(app.updatedAt).toLocaleDateString()}</td>
+                                                    <td className="application-actions-cell">
+                                                        <button className="action-btn-app view-details-btn" title="View Details">
+                                                            <i className="fas fa-eye"></i>
+                                                        </button>
+                                                        {(app.status !== 'Rejected' && app.status !== 'Withdrawn' && app.status !== 'Offer Accepted') && (
+                                                            <button
+                                                                onClick={() => handleWithdrawApplication(app._id)}
+                                                                className="action-btn-app withdraw-btn"
+                                                                title="Withdraw Application"
+                                                            >
+                                                                <i className="fas fa-times-circle"></i>
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="no-applications-found">
+                                    <i className="fas fa-folder-open empty-icon"></i>
+                                    <p>You haven't applied to any jobs yet, or no applications match your filters.</p>
+                                    <Link to="/student/job-listings" className="find-jobs-link">Find Jobs</Link>
+                                </div>
+                            )}
 
-                        {totalPages > 1 && (
-                            <div className="pagination-controls-apps">
-                                <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
-                                    <i className="fas fa-chevron-left"></i> Previous
-                                </button>
-                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(num => (
-                                    <button
-                                        key={num}
-                                        onClick={() => handlePageChange(num)}
-                                        className={currentPage === num ? 'active' : ''}
-                                    >
-                                        {num}
+                            {totalPages > 1 && (
+                                <div className="pagination-controls-apps">
+                                    <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+                                        <i className="fas fa-chevron-left"></i> Previous
                                     </button>
-                                ))}
-                                <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-                                    Next <i className="fas fa-chevron-right"></i>
-                                </button>
-                            </div>
-                        )}
-                    </div>
+                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(num => (
+                                        <button
+                                            key={num}
+                                            onClick={() => handlePageChange(num)}
+                                            className={currentPage === num ? 'active' : ''}
+                                        >
+                                            {num}
+                                        </button>
+                                    ))}
+                                    <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+                                        Next <i className="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </main>
             </div>
         </div>

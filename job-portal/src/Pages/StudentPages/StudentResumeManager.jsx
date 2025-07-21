@@ -1,13 +1,38 @@
-import React, { useState, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+
+// --- Skeleton Loader Component ---
+const ResumeManagerSkeleton = () => (
+    <>
+        <style>{`
+            .skeleton-box { background-color: #e0e0e0; border-radius: 8px; animation: skeleton-pulse 1.5s infinite ease-in-out; }
+            .skeleton-line { width: 100%; height: 20px; margin-bottom: 10px; border-radius: 4px; }
+            .skeleton-line.short { width: 60%; }
+            @keyframes skeleton-pulse { 0% { background-color: #e0e0e0; } 50% { background-color: #f0f0f0; } 100% { background-color: #e0e0e0; } }
+        `}</style>
+        <div className="resume-manager-container">
+            <div className="resume-manager-header skeleton-box" style={{ height: '60px' }}></div>
+            <div className="no-resumes-message skeleton-box" style={{ height: '150px', marginTop: '1rem' }}>
+                <div className="skeleton-line" style={{ width: '80%', margin: 'auto' }}></div>
+                <div className="skeleton-line short" style={{ width: '50%', margin: 'auto' }}></div>
+            </div>
+            <div className="resume-list" style={{ padding: '1rem' }}>
+                <div className="resume-item skeleton-box" style={{ height: '80px', marginBottom: '1rem' }}></div>
+                <div className="resume-item skeleton-box" style={{ height: '80px', marginBottom: '1rem' }}></div>
+            </div>
+        </div>
+    </>
+);
+
 
 // Navigation items for the sidebar
 const navItems = [
     { path: '/student-dashboard', icon: 'fas fa-tachometer-alt', label: 'Dashboard' },
     { path: '/student-profile', icon: 'fas fa-user-circle', label: 'My Profile' },
     { path: '/student-resume', icon: 'fas fa-file-alt', label: 'Resume Manager' },
-    { path: '/student-applications', icon: 'fas fa-inbox', label: 'Applications', badge: 3 },
-    { path: '/student-notifications', icon: 'fas fa-bell', label: 'Notifications', badge: 5 },
+    { path: '/student-applications', icon: 'fas fa-inbox', label: 'Applications' },
+    { path: '/student-notifications', icon: 'fas fa-bell', label: 'Notifications' },
 ];
 // Initial states for dynamic form sections in AI builder
 const initialAiEducationEntry = { institution: '', degree: '', field: '', gradYear: '', gpa: '' };
@@ -17,15 +42,18 @@ const initialAiProjectEntry = { name: '', description: '', link: '', technologie
 
 function ResumeManagerStandalonePage() {
     const location = useLocation();
+    const navigate = useNavigate();
 
-    const [resumes, setResumes] = useState([
-        { id: 1, name: 'Software_Engineer_Resume_v3.pdf', uploadDate: '2023-06-15', size: '245KB', isDefault: true, url: '#' },
-        { id: 2, name: 'Data_Analyst_Targeted_Resume.docx', uploadDate: '2023-07-01', size: '180KB', isDefault: false, url: '#' },
-    ]);
+    const [resumes, setResumes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [studentData, setStudentData] = useState(null); // For header (name, avatar)
+
+    // State for Upload Resume Modal
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [fileToUpload, setFileToUpload] = useState(null);
     const [resumeName, setResumeName] = useState('');
     const fileInputRef = useRef(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     // State for "Build Resume with AI" Modal
     const [showBuildAiModal, setShowBuildAiModal] = useState(false);
@@ -37,62 +65,213 @@ function ResumeManagerStandalonePage() {
         skills: [''],
         projects: [initialAiProjectEntry],
     });
+    const [isGeneratingAiResume, setIsGeneratingAiResume] = useState(false);
+
 
     // State for "Check Resume Score" Modal
     const [showScoreModal, setShowScoreModal] = useState(false);
     const [scoreResumeFile, setScoreResumeFile] = useState(null);
     const [resumeScoreResult, setResumeScoreResult] = useState(null); // e.g., { score: 85, feedback: "Great skills section..." }
     const scoreFileInputRef = useRef(null);
+    const [isCheckingScore, setIsCheckingScore] = useState(false);
 
 
+    // Fetch resumes and student profile data on component mount
+    useEffect(() => {
+        const fetchResumesAndProfile = async () => {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                toast.error("Please log in to manage your resumes.");
+                navigate('/login');
+                return;
+            }
+
+            try {
+                // Fetch resumes
+                const resumesRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/resumes`, { // Assuming a resumes route
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                // Fetch student profile for header
+                const profileRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/profile/student`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!resumesRes.ok) {
+                    throw new Error('Failed to fetch resumes.');
+                }
+                const resumesData = await resumesRes.json();
+                setResumes(resumesData);
+
+                if (profileRes.ok) {
+                    const profileData = await profileRes.json();
+                    setStudentData(profileData);
+                    // Pre-fill AI builder personal details if profile exists
+                    setAiResumeData(prev => ({
+                        ...prev,
+                        personalDetails: {
+                            fullName: profileData.fullName || '',
+                            email: profileData.user?.email || '', // Email from populated user
+                            phone: profileData.phone || '',
+                            linkedin: profileData.linkedin || '',
+                            github: profileData.github || '',
+                            portfolio: profileData.portfolio || '',
+                        },
+                        // Optionally pre-fill other sections if desired
+                        education: profileData.education?.length > 0 ? profileData.education : [initialAiEducationEntry],
+                        experience: profileData.experience?.length > 0 ? profileData.experience : [initialAiExperienceEntry],
+                        skills: profileData.skills?.length > 0 ? profileData.skills : [''],
+                        bio: profileData.bio || '', // Use bio as summary
+                    }));
+
+                } else if (profileRes.status === 404) {
+                    console.warn("Student profile not found, using default for header.");
+                } else {
+                    throw new Error('Failed to fetch student profile for header.');
+                }
+
+            } catch (error) {
+                toast.error(error.message || "Could not fetch data.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchResumesAndProfile();
+    }, [navigate]);
+
+    // Handle file selection for upload modal
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                toast.error("File size exceeds 5MB limit.");
+                setFileToUpload(null);
+                return;
+            }
             setFileToUpload(file);
             setResumeName(file.name.split('.').slice(0, -1).join('.') || 'My Resume');
         }
     };
 
+    // Trigger hidden file input for upload modal
     const triggerFileInput = () => {
         fileInputRef.current.click();
     };
 
-    const handleUploadResume = (event) => {
+    // Handle actual resume upload to backend
+    const handleUploadResume = async (event) => {
         event.preventDefault();
         if (!fileToUpload) {
-            alert('Please select a file to upload.');
+            toast.error('Please select a file to upload.');
             return;
         }
-        const newResume = {
-            id: Date.now(),
-            name: resumeName || fileToUpload.name,
-            uploadDate: new Date().toISOString().split('T')[0],
-            size: `${(fileToUpload.size / 1024).toFixed(1)}KB`,
-            isDefault: resumes.length === 0,
-            url: URL.createObjectURL(fileToUpload),
-        };
-        setResumes([...resumes, newResume]);
-        console.log('Uploading resume:', newResume);
-        setShowUploadModal(false);
-        setFileToUpload(null);
-        setResumeName('');
-    };
 
-    const handleDeleteResume = (resumeId) => {
-        if (window.confirm('Are you sure you want to delete this resume?')) {
-            setResumes(resumes.filter(resume => resume.id !== resumeId));
-            console.log('Deleting resume:', resumeId);
+        setIsUploading(true);
+        const loadingToast = toast.loading('Uploading resume...');
+
+        const formData = new FormData();
+        formData.append('resumeFile', fileToUpload);
+        formData.append('resumeName', resumeName);
+        formData.append('isDefault', resumes.length === 0); // First resume becomes default
+
+        const token = localStorage.getItem('authToken');
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/resumes/upload`, { // New upload route
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    // 'Content-Type': 'multipart/form-data' is NOT set here, browser handles it for FormData
+                },
+                body: formData,
+            });
+
+            const result = await response.json();
+            toast.dismiss(loadingToast);
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to upload resume.');
+            }
+            
+            toast.success(result.message);
+            // Add the new resume to the state, ensuring it has an _id from backend
+            setResumes(prevResumes => {
+                const updatedResumes = prevResumes.map(r => ({ ...r, isDefault: false })); // Unset previous defaults
+                return [...updatedResumes, result.resume]; // Add new resume from backend response
+            });
+            setShowUploadModal(false);
+            setFileToUpload(null);
+            setResumeName('');
+
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error(error.message || 'An error occurred during upload.');
+        } finally {
+            setIsUploading(false);
         }
     };
 
-    const handleSetDefault = (resumeId) => {
-        setResumes(
-            resumes.map(resume => ({
-                ...resume,
-                isDefault: resume.id === resumeId,
-            }))
-        );
-        console.log('Setting default resume:', resumeId);
+    // Handle deleting a resume
+    const handleDeleteResume = async (resumeId) => {
+        if (!window.confirm('Are you sure you want to delete this resume?')) {
+            return;
+        }
+
+        const token = localStorage.getItem('authToken');
+        const loadingToast = toast.loading('Deleting resume...');
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/resumes/${resumeId}`, { // Delete route
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+
+            const result = await response.json();
+            toast.dismiss(loadingToast);
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to delete resume.');
+            }
+            
+            toast.success(result.message);
+            setResumes(prevResumes => prevResumes.filter(resume => resume._id !== resumeId));
+
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error(error.message || 'An error occurred during deletion.');
+        }
+    };
+
+    // Handle setting a resume as default
+    const handleSetDefault = async (resumeId) => {
+        const token = localStorage.getItem('authToken');
+        const loadingToast = toast.loading('Setting default resume...');
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/resumes/${resumeId}/set-default`, { // Set default route
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+
+            const result = await response.json();
+            toast.dismiss(loadingToast);
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to set default resume.');
+            }
+            
+            toast.success(result.message);
+            setResumes(
+                resumes.map(resume => ({
+                    ...resume,
+                    isDefault: resume._id === resumeId, // Use _id from MongoDB
+                }))
+            );
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error(error.message || 'An error occurred while setting default.');
+        }
     };
 
     // --- AI Resume Builder Functions ---
@@ -117,14 +296,14 @@ function ResumeManagerStandalonePage() {
     const addAiEntry = (section, initialEntry) => {
         setAiResumeData(prev => ({
             ...prev,
-            [section]: [...prev[section], { ...initialEntry, id: Date.now() }], // Add unique id for key prop
+            [section]: [...prev[section], { ...initialEntry, _id: Date.now().toString() }], // Add temporary client-side id
         }));
     };
 
-    const removeAiEntry = (section, index) => {
+    const removeAiEntry = (section, idToRemove) => {
         setAiResumeData(prev => ({
             ...prev,
-            [section]: prev[section].filter((_, i) => i !== index),
+            [section]: prev[section].filter(item => item._id !== idToRemove),
         }));
     };
 
@@ -143,18 +322,56 @@ function ResumeManagerStandalonePage() {
     };
 
 
-    const handleGenerateAiResume = (event) => {
+    const handleGenerateAiResume = async (event) => {
         event.preventDefault();
-        // In a real app, send aiResumeData to backend AI service
-        console.log('Generating AI Resume with data:', aiResumeData);
-        alert('Resume data sent for AI generation! (Check console)');
-        setShowBuildAiModal(false);
+        setIsGeneratingAiResume(true);
+        const loadingToast = toast.loading('Generating resume with AI...');
+        const token = localStorage.getItem('authToken');
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/resumes/ai-build`, { // New AI build route
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(aiResumeData),
+            });
+
+            const result = await response.json();
+            toast.dismiss(loadingToast);
+
+            if (!response.ok) {
+                throw new Error(result.message || 'AI resume generation failed.');
+            }
+            
+            toast.success(result.message);
+            // Assuming the backend returns the generated resume details (e.g., URL or content)
+            // You might want to display the generated resume or add it to the list of resumes
+            // For now, let's just show success and close modal.
+            setShowBuildAiModal(false);
+            // Optionally, re-fetch resumes to show the new AI-generated one
+            // fetchResumesAndProfile(); // You might need to make fetchResumesAndProfile callable or re-trigger useEffect
+            // For simplicity, we can just add a mock entry or prompt user to upload/download.
+            // A real implementation would involve downloading the generated file or displaying its content.
+
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error(error.message || 'An error occurred during AI resume generation.');
+        } finally {
+            setIsGeneratingAiResume(false);
+        }
     };
 
     // --- Resume Score Checker Functions ---
     const handleScoreResumeUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                toast.error("File size exceeds 5MB limit.");
+                setScoreResumeFile(null);
+                return;
+            }
             setScoreResumeFile(file);
             setResumeScoreResult(null); // Clear previous results
         }
@@ -163,23 +380,55 @@ function ResumeManagerStandalonePage() {
         scoreFileInputRef.current.click();
     }
 
-    const handleCheckResumeScore = (event) => {
+    const handleCheckResumeScore = async (event) => {
         event.preventDefault();
         if (!scoreResumeFile) {
-            alert('Please upload a resume to check its score.');
+            toast.error('Please upload a resume to check its score.');
             return;
         }
-        // Simulate AI processing
-        console.log('Checking score for resume:', scoreResumeFile.name);
-        setResumeScoreResult({ processing: true });
-        setTimeout(() => {
-            const randomScore = Math.floor(Math.random() * 31) + 70; // Score between 70-100
+
+        setIsCheckingScore(true);
+        const loadingToast = toast.loading('Analyzing your resume...');
+        const token = localStorage.getItem('authToken');
+
+        const formData = new FormData();
+        formData.append('resumeFile', scoreResumeFile);
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/student/resumes/check-score`, { // New AI score route
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            const result = await response.json();
+            toast.dismiss(loadingToast);
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Resume scoring failed.');
+            }
+            
+            toast.success(result.message);
             setResumeScoreResult({
-                score: randomScore,
-                feedback: `Your resume shows strong potential. Areas for improvement: quantify achievements more. Keywords found: ${randomScore > 85 ? 'React, Node.js, Agile' : 'JavaScript, Teamwork'}.`,
+                score: result.score,
+                feedback: result.feedback,
                 fileName: scoreResumeFile.name,
             });
-        }, 2000);
+
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error(error.message || 'An error occurred during resume scoring.');
+        } finally {
+            setIsCheckingScore(false);
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('authToken');
+        toast.success("Logged out successfully!");
+        navigate('/login');
     };
 
 
@@ -188,7 +437,7 @@ function ResumeManagerStandalonePage() {
             {/* Sidebar */}
             <div className="student-page-sidebar">
                 <div className="student-page-sidebar-header">
-                    <h1 className="student-page-sidebar-title">CareerConnect</h1>
+                    <h1 className="student-page-sidebar-title">Pro <span className="trck">Track</span></h1>
                 </div>
                 <nav className="student-page-sidebar-nav">
                     {navItems.map((item) => (
@@ -199,7 +448,6 @@ function ResumeManagerStandalonePage() {
                         >
                             <i className={`${item.icon} student-page-nav-icon`}></i>
                             {item.label}
-                            {item.badge && <span className="student-page-nav-badge">{item.badge}</span>}
                         </Link>
                     ))}
                 </nav>
@@ -215,73 +463,86 @@ function ResumeManagerStandalonePage() {
                                 <i className="fas fa-bell"></i>
                             </button>
                             <div className="student-page-user-profile">
-                                <span className="student-page-user-name">Jane S.</span>
-                                <div className="student-page-user-avatar">JS</div>
+                                <span className="student-page-user-name">{studentData?.fullName?.split(' ')[0] || 'Student'}</span>
+                                <div className="student-page-user-avatar">
+                                    {studentData?.profilePicture && !studentData.profilePicture.includes('placehold.co') ? (
+                                        <img src={studentData.profilePicture} alt="Profile" className="header-profile-img" />
+                                    ) : (
+                                        studentData?.fullName ? studentData.fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'SU'
+                                    )}
+                                </div>
                             </div>
+                            <button onClick={handleLogout} className="logout-button" title="Logout">
+                                <i className="fas fa-sign-out-alt"></i>
+                                <span className="logout-text">Logout</span>
+                            </button>
                         </div>
                     </div>
                 </header>
 
                 <main className="student-page-content-area">
-                    <div className="resume-manager-container">
-                        <div className="resume-manager-header">
-                            <h2>Manage Your Resumes</h2>
-                            <div className="resume-actions-top">
-                                <button onClick={() => setShowBuildAiModal(true)} className="ai-feature-btn build-ai-btn">
-                                    <i className="fas fa-magic"></i> Build with AI
-                                </button>
-                                <button onClick={() => setShowScoreModal(true)} className="ai-feature-btn score-check-btn">
-                                    <i className="fas fa-clipboard-check"></i> Check Resume Score
-                                </button>
-                                <button onClick={() => setShowUploadModal(true)} className="upload-new-resume-btn main-upload-btn">
-                                    <i className="fas fa-plus"></i> Upload New Resume
-                                </button>
+                    {loading ? <ResumeManagerSkeleton /> : (
+                        <div className="resume-manager-container">
+                            <div className="resume-manager-header">
+                                <h2>Manage Your Resumes</h2>
+                                <div className="resume-actions-top">
+                                    <button onClick={() => setShowBuildAiModal(true)} className="ai-feature-btn build-ai-btn">
+                                        <i className="fas fa-magic"></i> Build with AI
+                                    </button>
+                                    <button onClick={() => setShowScoreModal(true)} className="ai-feature-btn score-check-btn">
+                                        <i className="fas fa-clipboard-check"></i> Check Resume Score
+                                    </button>
+                                    <button onClick={() => setShowUploadModal(true)} className="upload-new-resume-btn main-upload-btn">
+                                        <i className="fas fa-plus"></i> Upload New Resume
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        {resumes.length === 0 && !showBuildAiModal && !showScoreModal && (
-                            <div className="no-resumes-message">
-                                <i className="fas fa-folder-open empty-icon"></i>
-                                <p>You haven't uploaded any resumes yet.</p>
-                                <p>Use the buttons above to build one with AI, check a resume's score, or upload your own.</p>
-                            </div>
-                        )}
-                        {resumes.length > 0 && (
-                            <ul className="resume-list">
-                                {resumes.map(resume => (
-                                    <li key={resume.id} className="resume-item">
-                                        <div className="resume-icon">
-                                            <i className={resume.name.endsWith('.pdf') ? 'fas fa-file-pdf' : 'fas fa-file-word'}></i>
-                                        </div>
-                                        <div className="resume-details">
-                                            <span className="resume-name">{resume.name}</span>
-                                            <span className="resume-meta">
-                                                Uploaded: {resume.uploadDate} | Size: {resume.size}
-                                            </span>
-                                        </div>
-                                        <div className="resume-status">
-                                            {resume.isDefault && <span className="default-badge">Default</span>}
-                                        </div>
-                                        <div className="resume-actions">
-                                            <a href={resume.url} target="_blank" rel="noopener noreferrer" className="action-btn view-btn" title="View/Download">
-                                                <i className="fas fa-eye"></i>
-                                            </a>
-                                            {!resume.isDefault && (
-                                                <button onClick={() => handleSetDefault(resume.id)} className="action-btn default-btn" title="Set as Default">
-                                                    <i className="fas fa-star"></i>
+                            {resumes.length === 0 && !showBuildAiModal && !showScoreModal && (
+                                <div className="no-resumes-message">
+                                    <i className="fas fa-folder-open empty-icon"></i>
+                                    <p>You haven't uploaded any resumes yet.</p>
+                                    <p>Use the buttons above to build one with AI, check a resume's score, or upload your own.</p>
+                                </div>
+                            )}
+                            {resumes.length > 0 && (
+                                <ul className="resume-list">
+                                    {resumes.map(resume => (
+                                        <li key={resume._id} className="resume-item">
+                                            <div className="resume-icon">
+                                                <i className={resume.fileName.endsWith('.pdf') ? 'fas fa-file-pdf' : 'fas fa-file-word'}></i>
+                                            </div>
+                                            <div className="resume-details">
+                                                <span className="resume-name">{resume.name || resume.fileName}</span>
+                                                <span className="resume-meta">
+                                                    Uploaded: {new Date(resume.uploadDate).toLocaleDateString()} | Size: {resume.size}
+                                                </span>
+                                            </div>
+                                            <div className="resume-status">
+                                                {resume.isDefault && <span className="default-badge">Default</span>}
+                                            </div>
+                                            <div className="resume-actions">
+                                                {/* Assuming resume.url is provided by backend for download/view */}
+                                                <a href={resume.url} target="_blank" rel="noopener noreferrer" className="action-btn view-btn" title="View/Download">
+                                                    <i className="fas fa-eye"></i>
+                                                </a>
+                                                {!resume.isDefault && (
+                                                    <button onClick={() => handleSetDefault(resume._id)} className="action-btn default-btn" title="Set as Default">
+                                                        <i className="fas fa-star"></i>
+                                                    </button>
+                                                )}
+                                                <button onClick={() => handleDeleteResume(resume._id)} className="action-btn delete-btn" title="Delete">
+                                                    <i className="fas fa-trash-alt"></i>
                                                 </button>
-                                            )}
-                                            <button onClick={() => handleDeleteResume(resume.id)} className="action-btn delete-btn" title="Delete">
-                                                <i className="fas fa-trash-alt"></i>
-                                            </button>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
 
-                    {/* Upload Resume Modal (Existing) */}
+                    {/* Upload Resume Modal */}
                     {showUploadModal && (
                         <div className="modal-overlay">
                             <div className="modal-content">
@@ -312,8 +573,10 @@ function ResumeManagerStandalonePage() {
                                         )}
                                     </div>
                                     <div className="modal-actions">
-                                        <button type="button" onClick={() => setShowUploadModal(false)} className="cancel-btn">Cancel</button>
-                                        <button type="submit" className="upload-btn-modal" disabled={!fileToUpload}>Upload</button>
+                                        <button type="button" onClick={() => setShowUploadModal(false)} className="cancel-btn" disabled={isUploading}>Cancel</button>
+                                        <button type="submit" className="upload-btn-modal" disabled={!fileToUpload || isUploading}>
+                                            {isUploading ? 'Uploading...' : 'Upload'}
+                                        </button>
                                     </div>
                                 </form>
                             </div>
@@ -349,7 +612,7 @@ function ResumeManagerStandalonePage() {
                                     <fieldset className="ai-form-fieldset">
                                         <legend>Education</legend>
                                         {aiResumeData.education.map((edu, index) => (
-                                            <div key={edu.id || index} className="ai-form-dynamic-entry">
+                                            <div key={edu._id || index} className="ai-form-dynamic-entry">
                                                 <input type="text" name="institution" placeholder="Institution" value={edu.institution} onChange={(e) => handleAiInputChange('education', index, e)} />
                                                 <input type="text" name="degree" placeholder="Degree (e.g., B.S. in Computer Science)" value={edu.degree} onChange={(e) => handleAiInputChange('education', index, e)} />
                                                 <input type="text" name="field" placeholder="Field of Study" value={edu.field} onChange={(e) => handleAiInputChange('education', index, e)} />
@@ -357,7 +620,7 @@ function ResumeManagerStandalonePage() {
                                                     <input type="text" name="gradYear" placeholder="Graduation Year (YYYY)" value={edu.gradYear} onChange={(e) => handleAiInputChange('education', index, e)} />
                                                     <input type="text" name="gpa" placeholder="GPA (Optional)" value={edu.gpa} onChange={(e) => handleAiInputChange('education', index, e)} />
                                                 </div>
-                                                {aiResumeData.education.length > 1 && <button type="button" onClick={() => removeAiEntry('education', index)} className="remove-entry-btn-ai"><i className="fas fa-minus-circle"></i> Remove</button>}
+                                                {aiResumeData.education.length > 1 && <button type="button" onClick={() => removeAiEntry('education', edu._id || index)} className="remove-entry-btn-ai"><i className="fas fa-minus-circle"></i> Remove</button>}
                                             </div>
                                         ))}
                                         <button type="button" onClick={() => addAiEntry('education', initialAiEducationEntry)} className="add-entry-btn-ai"><i className="fas fa-plus-circle"></i> Add Education</button>
@@ -367,7 +630,7 @@ function ResumeManagerStandalonePage() {
                                     <fieldset className="ai-form-fieldset">
                                         <legend>Experience</legend>
                                         {aiResumeData.experience.map((exp, index) => (
-                                            <div key={exp.id || index} className="ai-form-dynamic-entry">
+                                            <div key={exp._id || index} className="ai-form-dynamic-entry">
                                                 <input type="text" name="company" placeholder="Company Name" value={exp.company} onChange={(e) => handleAiInputChange('experience', index, e)} />
                                                 <input type="text" name="title" placeholder="Job Title" value={exp.title} onChange={(e) => handleAiInputChange('experience', index, e)} />
                                                 <div className="ai-form-grid-half">
@@ -375,7 +638,7 @@ function ResumeManagerStandalonePage() {
                                                     <input type="text" name="endDate" placeholder="End Date (e.g., Aug 2022 or Present)" value={exp.endDate} onChange={(e) => handleAiInputChange('experience', index, e)} />
                                                 </div>
                                                 <textarea name="description" placeholder="Key responsibilities and achievements..." value={exp.description} onChange={(e) => handleAiInputChange('experience', index, e)} rows="3"></textarea>
-                                                {aiResumeData.experience.length > 1 && <button type="button" onClick={() => removeAiEntry('experience', index)} className="remove-entry-btn-ai"><i className="fas fa-minus-circle"></i> Remove</button>}
+                                                {aiResumeData.experience.length > 1 && <button type="button" onClick={() => removeAiEntry('experience', exp._id || index)} className="remove-entry-btn-ai"><i className="fas fa-minus-circle"></i> Remove</button>}
                                             </div>
                                         ))}
                                         <button type="button" onClick={() => addAiEntry('experience', initialAiExperienceEntry)} className="add-entry-btn-ai"><i className="fas fa-plus-circle"></i> Add Experience</button>
@@ -397,12 +660,12 @@ function ResumeManagerStandalonePage() {
                                     <fieldset className="ai-form-fieldset">
                                         <legend>Projects</legend>
                                         {aiResumeData.projects.map((proj, index) => (
-                                            <div key={proj.id || index} className="ai-form-dynamic-entry">
+                                            <div key={proj._id || index} className="ai-form-dynamic-entry">
                                                 <input type="text" name="name" placeholder="Project Name" value={proj.name} onChange={(e) => handleAiInputChange('projects', index, e)} />
                                                 <input type="text" name="technologies" placeholder="Technologies Used (e.g., React, Firebase)" value={proj.technologies} onChange={(e) => handleAiInputChange('projects', index, e)} />
                                                 <textarea name="description" placeholder="Project description and your role..." value={proj.description} onChange={(e) => handleAiInputChange('projects', index, e)} rows="2"></textarea>
                                                 <input type="text" name="link" placeholder="Project Link (Optional)" value={proj.link} onChange={(e) => handleAiInputChange('projects', index, e)} />
-                                                {aiResumeData.projects.length > 1 && <button type="button" onClick={() => removeAiEntry('projects', index)} className="remove-entry-btn-ai"><i className="fas fa-minus-circle"></i> Remove</button>}
+                                                {aiResumeData.projects.length > 1 && <button type="button" onClick={() => removeAiEntry('projects', proj._id || index)} className="remove-entry-btn-ai"><i className="fas fa-minus-circle"></i> Remove</button>}
                                             </div>
                                         ))}
                                         <button type="button" onClick={() => addAiEntry('projects', initialAiProjectEntry)} className="add-entry-btn-ai"><i className="fas fa-plus-circle"></i> Add Project</button>
@@ -410,8 +673,10 @@ function ResumeManagerStandalonePage() {
 
 
                                     <div className="modal-actions">
-                                        <button type="button" onClick={() => setShowBuildAiModal(false)} className="cancel-btn">Cancel</button>
-                                        <button type="submit" className="generate-ai-btn">Generate with AI</button>
+                                        <button type="button" onClick={() => setShowBuildAiModal(false)} className="cancel-btn" disabled={isGeneratingAiResume}>Cancel</button>
+                                        <button type="submit" className="generate-ai-btn" disabled={isGeneratingAiResume}>
+                                            {isGeneratingAiResume ? <><i className="fas fa-spinner fa-spin"></i> Generating...</> : 'Generate with AI'}
+                                        </button>
                                     </div>
                                 </form>
                             </div>
@@ -423,7 +688,7 @@ function ResumeManagerStandalonePage() {
                         <div className="modal-overlay">
                             <div className="modal-content">
                                 <h3>Check Your Resume Score</h3>
-                                {!resumeScoreResult || resumeScoreResult.processing ? (
+                                {!resumeScoreResult || isCheckingScore ? (
                                     <form onSubmit={handleCheckResumeScore}>
                                         <div className="form-group-modal file-upload-area score-upload-area" onClick={triggerScoreFileInput}>
                                             <input type="file" ref={scoreFileInputRef} onChange={handleScoreResumeUpload} accept=".pdf,.doc,.docx" style={{ display: 'none' }} />
@@ -441,11 +706,11 @@ function ResumeManagerStandalonePage() {
                                                 </div>
                                             )}
                                         </div>
-                                        {resumeScoreResult?.processing && <p className="processing-message">Analyzing your resume...</p>}
+                                        {isCheckingScore && <p className="processing-message">Analyzing your resume...</p>}
                                         <div className="modal-actions">
-                                            <button type="button" onClick={() => setShowScoreModal(false)} className="cancel-btn">Cancel</button>
-                                            <button type="submit" className="upload-btn-modal" disabled={!scoreResumeFile || resumeScoreResult?.processing}>
-                                                {resumeScoreResult?.processing ? 'Processing...' : 'Check Score'}
+                                            <button type="button" onClick={() => setShowScoreModal(false)} className="cancel-btn" disabled={isCheckingScore}>Cancel</button>
+                                            <button type="submit" className="upload-btn-modal" disabled={!scoreResumeFile || isCheckingScore}>
+                                                {isCheckingScore ? 'Processing...' : 'Check Score'}
                                             </button>
                                         </div>
                                     </form>

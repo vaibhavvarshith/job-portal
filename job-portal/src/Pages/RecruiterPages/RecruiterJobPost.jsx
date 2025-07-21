@@ -42,7 +42,7 @@ function PostJobStandalonePage() {
             const token = localStorage.getItem('authToken');
             if (!token) return; // Don't fetch if not logged in
             try {
-                const response = await fetch('https://pro-track-job-portal-backend.onrender.com/api/profile/recruiter', {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/profile/recruiter`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
@@ -97,7 +97,7 @@ function PostJobStandalonePage() {
         const loadingToast = toast.loading('Posting job...');
 
         try {
-            const response = await fetch('https://pro-track-job-portal-backend.onrender.com/api/jobs/post', {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/jobs/post`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

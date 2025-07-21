@@ -66,7 +66,7 @@ function CompanyProfileStandalonePage() {
             }
 
             try {
-                const response = await fetch('https://pro-track-job-portal-backend.onrender.com/api/profile/recruiter', {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/profile/recruiter`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -111,7 +111,7 @@ function CompanyProfileStandalonePage() {
         const loadingToast = toast.loading('Saving profile...');
 
         try {
-            const response = await fetch('https://pro-track-job-portal-backend.onrender.com/api/profile/recruiter', {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/profile/recruiter`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

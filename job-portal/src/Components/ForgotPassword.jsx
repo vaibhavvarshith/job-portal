@@ -48,7 +48,7 @@ function ForgotPasswordPage() {
     const loadingToast = toast.loading('Sending reset link...');
 
     try {
-        const response = await fetch('https://pro-track-job-portal-backend.onrender.com/api/auth/forgot-password', {
+        const response = await fetch('BACKEND_URL/api/auth/forgot-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email }),

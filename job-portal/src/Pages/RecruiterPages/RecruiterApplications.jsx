@@ -53,6 +53,7 @@ function ApplicationsApprovalStandalonePage() {
     const [companyData, setCompanyData] = useState(null); // State for header data
 
     useEffect(() => {
+        console.log("Backend URL being used:", import.meta.env.VITE_BACKEND_URL);
         const fetchPageData = async () => {
             const token = localStorage.getItem('authToken');
             if (!token) {
@@ -64,8 +65,8 @@ function ApplicationsApprovalStandalonePage() {
             try {
                 // Fetch applications and profile data in parallel for efficiency
                 const [appsRes, profileRes] = await Promise.all([
-                    fetch('https://pro-track-job-portal-backend.onrender.com/api/applications/recruiter', { headers: { 'Authorization': `Bearer ${token}` } }),
-                    fetch('https://pro-track-job-portal-backend.onrender.com/api/profile/recruiter', { headers: { 'Authorization': `Bearer ${token}` } })
+                    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/applications/recruiter`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/profile/recruiter`, { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
 
                 if (!appsRes.ok) {
@@ -122,7 +123,7 @@ function ApplicationsApprovalStandalonePage() {
         const loadingToast = toast.loading('Updating status...');
 
         try {
-            const response = await fetch(`https://pro-track-job-portal-backend.onrender.com/api/applications/${appId}/status`, {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/applications/${appId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

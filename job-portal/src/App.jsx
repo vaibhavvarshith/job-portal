@@ -23,6 +23,15 @@ import PostInternshipStandalonePage from './Pages/RecruiterPages/RecruiterPostIn
 import ApplicationsApprovalStandalonePage from './Pages/RecruiterPages/RecruiterApplications';
 import CompanyProfileStandalonePage from './Pages/RecruiterPages/RecruiterCompanyProfile';
 
+// Placeholder for JobListingPage - You will need to create this component
+const JobListingPage = () => (
+  <div style={{ padding: '2rem', textAlign: 'center', fontSize: '1.5rem', color: '#333' }}>
+    <h2>Job Listings Page Coming Soon!</h2>
+    <p>This is where students can find and browse available jobs and internships.</p>
+    <p>Please create the `JobListingPage.jsx` component.</p>
+  </div>
+);
+
 
 const RootLayout = () => {
   return (
@@ -107,6 +116,11 @@ const router = createBrowserRouter([
       {
         path: "/student-applications",
         element: <ApplicationsStandalonePage />
+      },
+      // --- NEW ROUTE FOR JOB LISTINGS ---
+      {
+        path: "/student/job-listings",
+        element: <JobListingPage /> // Placeholder component
       },
       {
         path: "/student-notifications",
