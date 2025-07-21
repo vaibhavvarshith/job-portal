@@ -1,7 +1,7 @@
 # Environment Variables
 # CRITICAL: Contains secrets like database passwords. NEVER commit this file.
 backend/.env
-# job-portal/.env
+job-portal/.env
 *.local
 
 # Dependency Directories
