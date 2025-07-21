@@ -355,7 +355,7 @@ function LandingPage() {
                         <h3>Contact Us</h3>
                         <p>📧 hr@pro-track.in</p>
                         <p>🌐 www.pro-track.in</p>
-                        <p>📞 Contact: Samridhi Kumar (Project Mentor)</p>
+                        <p>📞 Contact: Suraj Kumar & Ayush Kumar Verma (Project Mentor)</p>
                     </div>
                 </div>
                 <div className="copyright animate-on-scroll">
