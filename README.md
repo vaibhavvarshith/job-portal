@@ -1,8 +1,5 @@
 # ProTrack - Full-Stack Job & Internship Portal
 
-[![Vercel Deployment Status](https://vercel.com/api/docs/api/badges/deployments/YOUR_VERCEL_USERNAME/YOUR_VERCEL_PROJECT_ID/PRODUCTION_DEPLOYMENT_ID)](https://pro-track-job-portal.vercel.app/)
-[![Render Deployment Status](https://api.render.com/v1/services/srv-YOUR_RENDER_SERVICE_ID/badges/deploy.svg)](https://pro-track-job-portal-backend.onrender.com/)
-
 ProTrack is a comprehensive, role-based web application designed to revolutionize how students and recruiters connect. It offers a seamless and efficient platform for managing career opportunities and talent acquisition, all overseen by an administrative panel.
 
 This project was a collaborative effort during our internship at **Infotact Solutions**.
@@ -53,7 +50,7 @@ This project was a collaborative effort between:
 
 ## Website URL
 
-[PRO TRACK](https://pro-track-job-portal.vercel.app/)
+**URL:** [Pro Track](https://pro-track-job-portal.vercel.app/)
 
 ---
 
