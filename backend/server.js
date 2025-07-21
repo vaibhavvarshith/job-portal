@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('cors');
+const cors = require('cors'); // Use the cors package
 require('dotenv').config();
 const connectDB = require('./config/db');
 const path = require('path');
@@ -11,20 +11,18 @@ const app = express();
 connectDB();
 
 // --- Middlewares ---
-const allowedOrigins = [
-    process.env.FRONTEND_URL, // Vercel URL
-    'http://localhost:5173' // Local development
-];
+
+// CORS Configuration
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  }
+  origin: '*', // Allow all origins (for debugging)
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allow all common HTTP methods
+  credentials: true, // Allow cookies to be sent (if you use them)
+  optionsSuccessStatus: 204 // Some legacy browsers (IE11, various SmartTVs) choke on 200
 };
-app.use(cors(corsOptions));
+
+app.use(cors(corsOptions)); // Use the cors middleware
+
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -44,11 +42,11 @@ app.use('/api/public', require('./routes/public'));
 app.use('/api/student', require('./routes/student'));
 app.use('/api/user', require('./routes/user'));
 app.use('/api/student/resumes', require('./routes/resume'));
-app.use('/api/admin', require('./routes/admin')); // NEW: Admin routes
+app.use('/api/admin', require('./routes/admin'));
 console.log("✅ All API routes registration initiated.");
 
 
-// Simple test route
+// A simple test route
 app.get('/', (req, res) => res.send('API is running...'));
 
 
