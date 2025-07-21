@@ -1,62 +1,238 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const StudentProfile = require('../models/studentProfile');
 const Application = require('../models/Application');
 const Job = require('../models/Job');
+const Internship = require('../models/Internship'); // Assuming you might use this for recommendations too
 const User = require('../models/User');
-
-// Yeh log batayega ki file server mein load hui ya nahi
-console.log("✅ Student routes file loaded and is being registered.");
+const CompanyProfile = require('../models/CompanyProfile');
+const Notification = require('../models/Notification'); // Import Notification model
 
 /**
  * @route   GET /api/student/dashboard
- * @desc    Get all data needed for the student dashboard
+ * @desc    Get student dashboard data (profile completion, application stats, recent activity, recommended jobs)
  * @access  Private (Student)
  */
 router.get('/dashboard', auth, async (req, res) => {
-    if (!req.user || req.user.role !== 'student') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
-
     try {
         const studentId = req.user.id;
 
-        const [
-            appliedCount,
-            interviewsCount,
-            rejectedCount,
-            recommendedJobs,
-            student
-        ] = await Promise.all([
-            Application.countDocuments({ studentId }),
-            Application.countDocuments({ studentId, status: 'Interview Scheduled' }),
-            Application.countDocuments({ studentId, status: 'Rejected' }),
-            Job.find().sort({ createdAt: -1 }).limit(3),
-            User.findById(studentId).select('name')
-        ]);
+        // 1. Fetch Student Profile
+        const studentProfile = await StudentProfile.findOne({ user: studentId }).populate('user', 'email');
+
+        let profileCompletion = 0;
+        let studentName = req.user.name || 'Student';
+        let profilePicture = 'https://placehold.co/120x120/15803D/FFFFFF?text=SU';
+
+        if (studentProfile) {
+            studentName = studentProfile.fullName || req.user.name || 'Student';
+            profilePicture = studentProfile.profilePicture || profilePicture;
+
+            let completedFields = 0;
+            const profileFields = [
+                studentProfile.fullName,
+                studentProfile.phone,
+                studentProfile.linkedin,
+                studentProfile.github,
+                studentProfile.portfolio,
+                studentProfile.bio,
+            ];
+            profileFields.forEach(field => {
+                if (field && field.trim() !== '') completedFields++;
+            });
+
+            if (studentProfile.education && studentProfile.education.length > 0) completedFields++;
+            if (studentProfile.experience && studentProfile.experience.length > 0) completedFields++;
+            if (studentProfile.skills && studentProfile.skills.length > 0) completedFields++;
+            
+            const totalTrackedFields = 9; // Adjust based on how many fields you actually track for completion
+            profileCompletion = Math.round((completedFields / totalTrackedFields) * 100);
+            if (profileCompletion > 100) profileCompletion = 100;
+        }
+
+        // 2. Fetch Application Status
+        const applications = await Application.find({ studentId: studentId });
+        const applicationStatus = {
+            applied: applications.length,
+            interviews: applications.filter(app => app.status === 'Interview Scheduled').length,
+            offers: applications.filter(app => app.status === 'Offer Extended').length,
+            rejected: applications.filter(app => app.status === 'Rejected').length,
+        };
+
+        // 3. Fetch Recent Activity (from applications)
+        const recentActivity = applications
+            .sort((a, b) => b.createdAt - a.createdAt)
+            .slice(0, 5)
+            .map(app => ({
+                id: app._id,
+                text: `Application for ${app.jobId?.jobTitle || 'a job'} at ${app.recruiterId?.companyName || 'Unknown Company'} is ${app.status}.`,
+                time: new Date(app.createdAt).toLocaleDateString(),
+                icon: 'fas fa-file-signature'
+            }));
+
+        // 4. Fetch Recommended Jobs (latest 5 jobs)
+        const recommendedJobs = await Job.find({})
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .populate({
+                path: 'postedBy',
+                select: 'name email',
+                populate: {
+                    path: 'companyProfile', // This field is now in User model
+                    select: 'companyName logoUrl'
+                }
+            })
+            .lean();
+
+        const mappedRecommendedJobs = recommendedJobs.map(job => {
+            const companyName = job.postedBy?.companyProfile?.companyName || 'N/A';
+            const companyLogo = job.postedBy?.companyProfile?.logoUrl || '';
+            
+            const skills = job.requiredSkills && job.requiredSkills.length > 0 ? job.requiredSkills : ['No skills specified']; 
+            const salary = job.salaryMin && job.salaryMax ? `$${job.salaryMin} - $${job.salaryMax}` : job.salary || 'Negotiable';
+
+            return {
+                _id: job._id,
+                jobTitle: job.jobTitle,
+                companyName: companyName,
+                companyLogo: companyLogo, 
+                location: job.location,
+                createdAt: job.createdAt,
+                salary: salary,
+                skills: skills,
+                jobType: job.jobType,
+            };
+        });
+
+        // 5. Fetch Notification Count for Layout
+        const unreadNotificationCount = await Notification.countDocuments({ studentId: studentId, read: false });
+
 
         res.json({
-            studentName: student ? student.name : 'Student',
-            profileCompletion: 75, // Placeholder
-            applicationStatus: {
-                applied: appliedCount,
-                interviews: interviewsCount,
-                rejected: rejectedCount,
-                offers: 0, // Placeholder
-            },
-            recommendedJobs,
-            recentActivity: [ // Placeholder
-                { id: 1, text: 'Your application for Software Engineer was viewed.', time: '2 hours ago', icon: 'fas fa-eye' },
-                { id: 2, text: 'New job match: UI/UX Designer at CreativeMinds.', time: '1 day ago', icon: 'fas fa-bullseye' },
-            ]
+            studentName,
+            profilePicture,
+            profileCompletion,
+            applicationStatus,
+            recentActivity,
+            recommendedJobs: mappedRecommendedJobs,
+            notificationCount: unreadNotificationCount, // Send unread count
         });
 
     } catch (error) {
-        console.error('Error in /api/student/dashboard route:', error);
+        console.error('Error fetching student dashboard data:', error);
         res.status(500).json({ 
             message: 'Server error while fetching dashboard data.',
-            error: error.message
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined 
         });
+    }
+});
+
+/**
+ * @route   GET /api/student/applications
+ * @desc    Get all applications for the logged-in student
+ * @access  Private (Student)
+ */
+router.get('/applications', auth, async (req, res) => {
+    if (req.user.role !== 'student') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const applications = await Application.find({ studentId: req.user.id })
+            .populate('jobId', 'jobTitle jobType')
+            .populate('recruiterId', 'companyName'); // Populate recruiter details for company name
+        
+        res.status(200).json(applications);
+    } catch (error) {
+        console.error('Error fetching student applications:', error);
+        res.status(500).json({ message: 'Server error while fetching applications.' });
+    }
+});
+
+// --- NEW NOTIFICATION ROUTES ---
+
+/**
+ * @route   GET /api/student/notifications
+ * @desc    Get all notifications for the logged-in student
+ * @access  Private (Student)
+ */
+router.get('/notifications', auth, async (req, res) => {
+    if (req.user.role !== 'student') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const notifications = await Notification.find({ studentId: req.user.id })
+                                                .sort({ createdAt: -1 }); // Newest first
+        res.status(200).json(notifications);
+    } catch (error) {
+        console.error('Error fetching student notifications:', error);
+        res.status(500).json({ message: 'Server error fetching notifications.' });
+    }
+});
+
+/**
+ * @route   PATCH /api/student/notifications/:id/status
+ * @desc    Update the read status of a specific notification
+ * @access  Private (Student)
+ */
+router.patch('/notifications/:id/status', auth, async (req, res) => {
+    if (req.user.role !== 'student') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { id } = req.params;
+        const { read } = req.body;
+        const notification = await Notification.findOneAndUpdate(
+            { _id: id, studentId: req.user.id }, // Ensure student owns notification
+            { read: read },
+            { new: true }
+        );
+        if (!notification) {
+            return res.status(404).json({ message: 'Notification not found or unauthorized.' });
+        }
+        res.status(200).json({ message: 'Notification status updated.', notification });
+    } catch (error) {
+        console.error('Error updating notification status:', error);
+        res.status(500).json({ message: 'Server error updating notification status.' });
+    }
+});
+
+/**
+ * @route   PATCH /api/student/notifications/mark-all-read
+ * @desc    Mark all unread notifications for the student as read
+ * @access  Private (Student)
+ */
+router.patch('/notifications/mark-all-read', auth, async (req, res) => {
+    if (req.user.role !== 'student') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        await Notification.updateMany(
+            { studentId: req.user.id, read: false },
+            { read: true }
+        );
+        res.status(200).json({ message: 'All notifications marked as read.' });
+    } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+        res.status(500).json({ message: 'Server error marking all notifications as read.' });
+    }
+});
+
+/**
+ * @route   DELETE /api/student/notifications
+ * @desc    Delete all notifications for the logged-in student
+ * @access  Private (Student)
+ */
+router.delete('/notifications', auth, async (req, res) => {
+    if (req.user.role !== 'student') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        await Notification.deleteMany({ studentId: req.user.id });
+        res.status(200).json({ message: 'All notifications deleted.' });
+    } catch (error) {
+        console.error('Error deleting all notifications:', error);
+        res.status(500).json({ message: 'Server error deleting all notifications.' });
     }
 });
 

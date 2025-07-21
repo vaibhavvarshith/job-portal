@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// Education के लिए सब-स्कीमा
+// Sub-schema for Education
 const educationSchema = new mongoose.Schema({
     institution: { type: String, required: true },
     degree: { type: String, required: true },
@@ -9,7 +9,7 @@ const educationSchema = new mongoose.Schema({
     gpa: { type: String },
 });
 
-// Experience के लिए सब-स्कीमा
+// Sub-schema for Experience
 const experienceSchema = new mongoose.Schema({
     company: { type: String, required: true },
     title: { type: String, required: true },
@@ -18,7 +18,7 @@ const experienceSchema = new mongoose.Schema({
     description: { type: String },
 });
 
-// मुख्य Student Profile स्कीमा
+// Main Student Profile Schema
 const studentProfileSchema = new mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
     fullName: { type: String, required: true },
@@ -33,4 +33,6 @@ const studentProfileSchema = new mongoose.Schema({
     skills: [String],
 }, { timestamps: true });
 
-module.exports = mongoose.model('StudentProfile', studentProfileSchema);
+// Check if the model already exists before compiling it
+// This prevents the OverwriteModelError when the model is required multiple times
+module.exports = mongoose.models.StudentProfile || mongoose.model('StudentProfile', studentProfileSchema);

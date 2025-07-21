@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth'); // Check this path
-const Application = require('../models/Application'); // Check this path
+const auth = require('../middleware/auth');
+const Application = require('../models/Application');
 
 /**
  * @route   GET /api/applications/recruiter
@@ -18,30 +18,55 @@ router.get('/recruiter', auth, async (req, res) => {
             .populate('jobId', 'jobTitle jobType');
         res.status(200).json(applications);
     } catch (error) {
-        console.error('Error fetching applications:', error);
+        console.error('Error fetching applications for recruiter:', error);
         res.status(500).json({ message: 'Server error.' });
     }
 });
 
 /**
  * @route   PATCH /api/applications/:id/status
- * @desc    Update the status of an application
- * @access  Private (Recruiter)
+ * @desc    Update the status of an application.
+ * Allowed for Recruiter (any status) or Student (to 'Withdrawn' only for their own app).
+ * @access  Private (Recruiter or Student)
  */
 router.patch('/:id/status', auth, async (req, res) => {
-    if (req.user.role !== 'recruiter') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
+    const { status } = req.body;
+    const { id } = req.params;
+
     try {
-        const { status } = req.body;
-        const { id } = req.params;
-        const application = await Application.findOne({ _id: id, recruiterId: req.user.id });
+        let application = await Application.findById(id);
+
         if (!application) {
-            return res.status(404).json({ message: 'Application not found or you do not have permission to update it.' });
+            return res.status(404).json({ message: 'Application not found.' });
         }
-        application.status = status;
+
+        // Logic for Recruiter
+        if (req.user.role === 'recruiter') {
+            // Ensure the recruiter owns this application (posted the job/internship)
+            if (application.recruiterId.toString() !== req.user.id) {
+                return res.status(403).json({ message: 'Access denied. You do not have permission to update this application.' });
+            }
+            application.status = status;
+        } 
+        // Logic for Student
+        else if (req.user.role === 'student') {
+            // Students can only change their OWN application status to 'Withdrawn'
+            if (application.studentId.toString() !== req.user.id) {
+                return res.status(403).json({ message: 'Access denied. You can only withdraw your own applications.' });
+            }
+            if (status !== 'Withdrawn') {
+                return res.status(403).json({ message: 'Access denied. Students can only change status to "Withdrawn".' });
+            }
+            application.status = status;
+        } 
+        // Neither recruiter nor student (or other roles not allowed)
+        else {
+            return res.status(403).json({ message: 'Access denied. Unauthorized role.' });
+        }
+
         await application.save();
         res.status(200).json({ message: 'Application status updated successfully.', application });
+
     } catch (error) {
         console.error('Error updating application status:', error);
         res.status(500).json({ message: 'Server error.' });

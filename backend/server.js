@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const connectDB = require('./config/db');
+const path = require('path');
 
 // Initialize Express app
 const app = express();
@@ -11,7 +12,7 @@ connectDB();
 
 // --- Middlewares ---
 const allowedOrigins = [
-    'https://pro-track-job-portal.vercel.app', // Vercel URL
+    process.env.FRONTEND_URL, // Vercel URL
     'http://localhost:5173' // Local development
 ];
 const corsOptions = {
@@ -27,8 +28,12 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Serve static files from the 'uploads' directory (for resumes)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
 // --- Define Routes ---
-console.log("Registering API routes..."); // Debugging ke liye log
+console.log("Registering API routes...");
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/internships', require('./routes/internships'));
@@ -36,8 +41,11 @@ app.use('/api/profile', require('./routes/profiles'));
 app.use('/api/applications', require('./routes/applications'));
 app.use('/api/recruiter', require('./routes/recruiter'));
 app.use('/api/public', require('./routes/public'));
-app.use('/api/student', require('./routes/student')); // Ensure this line is present and correct
-console.log("✅ All API routes registration initiated."); // Debugging ke liye log
+app.use('/api/student', require('./routes/student'));
+app.use('/api/user', require('./routes/user'));
+app.use('/api/student/resumes', require('./routes/resume'));
+app.use('/api/admin', require('./routes/admin')); // NEW: Admin routes
+console.log("✅ All API routes registration initiated.");
 
 
 // Simple test route
