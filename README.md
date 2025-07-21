@@ -46,38 +46,14 @@ The application is structured around three distinct user roles, each provided wi
 ## 🤝 Team
 
 This project was a collaborative effort between:
-* **[Your Name Here]** (Backend Developer)
+* **Suraj Kumar** (Backend Developer)
 * **Ayush Kumar Verma** (Frontend Developer)
 
 ---
 
-## 📸 Screenshots
+## Website URL
 
-Here are some screenshots of the application demonstrating its key features:
-
-**Landing Page**
-!
-
-**Login/Register Page**
-!
-
-**Student Dashboard**
-!
-
-**Student Profile Page (Edit Mode)**
-!
-
-**Recruiter Dashboard**
-!
-
-**Recruiter Company Profile**
-!
-
-**Admin Dashboard**
-!
-
-**Admin User Management**
-!
+[PRO TRACK](https://pro-track-job-portal.vercel.app/)
 
 ---
 
@@ -85,7 +61,7 @@ Here are some screenshots of the application demonstrating its key features:
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/skr090850/Pro-Track-Job-Portal-.git
     ```bash
     cd ProTrack # Or the name of your cloned folder
     ```
