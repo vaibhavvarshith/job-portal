@@ -57,13 +57,14 @@ This project was a collaborative effort between:
 ## ⚙️ How to Run This Project Locally
 
 1.  **Clone the repository:**
+    
     ```bash
-    git clone https://github.com/skr090850/Pro-Track-Job-Portal-.git
+    git clone https://github.com/vaibhavvarshith/job-portal/edit/main.git
     ```bash
     cd ProTrack # Or the name of your cloned folder
     ```
 
-2.  **Setup Backend:**
+3.  **Setup Backend:**
     ```bash
     cd backend
     npm install
@@ -79,7 +80,7 @@ This project was a collaborative effort between:
         ```
         The backend server will start on `http://localhost:5000`.
 
-3.  **Setup Frontend:**
+4.  **Setup Frontend:**
     ```bash
     cd ../job-portal # If your frontend folder is named 'job-portal'
     npm install
